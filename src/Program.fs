@@ -310,13 +310,23 @@ let readYamlSchemaAsJson (stream: Stream) =
     if isNotNull result.OpenApiDiagnostic && result.OpenApiDiagnostic.Errors.Count > 0 then
         for error in result.OpenApiDiagnostic.Errors do
             Console.WriteLine $"  Schema warning: {error.Message}"
+    if isNull result.OpenApiDocument then
+        let errors =
+            if isNotNull result.OpenApiDiagnostic then
+                result.OpenApiDiagnostic.Errors
+                |> Seq.map (fun e -> e.Message)
+                |> String.concat "; "
+            else
+                "unknown error"
+        failwith $"Failed to parse YAML schema: {errors}"
     use stringWriter = new StringWriter()
     let jsonWriter = OpenApiJsonWriter(stringWriter)
     result.OpenApiDocument.SerializeAsV3(jsonWriter)
     stringWriter.ToString()
 
 let isYamlFile (path: string) =
-    path.EndsWith ".yaml" || path.EndsWith ".yml"
+    path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)
+    || path.EndsWith(".yml", StringComparison.OrdinalIgnoreCase)
 
 let getSchema(schema: string) (overrideSchema: JsonElement option) =
     let schemaContents =
@@ -338,13 +348,11 @@ let getSchema(schema: string) (overrideSchema: JsonElement option) =
             JsonNode.Parse(openApiJson).AsObject()
         elif schema.StartsWith "http" && isYamlFile schema then
             Console.WriteLine "Detected external YAML schema"
-            let content =
-                client.GetStringAsync(schema)
+            use stream =
+                client.GetStreamAsync(schema)
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
-            let schemaBytes = Encoding.UTF8.GetBytes(content)
-            use memStream = new MemoryStream(schemaBytes)
-            let jsonContent = readYamlSchemaAsJson memStream
+            let jsonContent = readYamlSchemaAsJson stream
             JsonNode.Parse(jsonContent).AsObject()
         elif schema.StartsWith "http" then
             let content =
