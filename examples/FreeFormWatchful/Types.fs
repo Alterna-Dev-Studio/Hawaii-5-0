@@ -75,7 +75,7 @@ type Log =
           log_type = None
           userid = userid }
 
-type Monitor = Newtonsoft.Json.Linq.JToken
+type Monitor = System.Text.Json.JsonElement
 
 type PostLog =
     { ///Datetime of the log
@@ -130,7 +130,7 @@ type PostSite =
           word_akeeba = None
           word_check = None }
 
-type Reports = Newtonsoft.Json.Linq.JToken
+type Reports = System.Text.Json.JsonElement
 
 type Site =
     { ///URL of the site
@@ -278,8 +278,8 @@ type Tag =
           nbSites = None
           ``type`` = None }
 
-type Uptime = Newtonsoft.Json.Linq.JToken
-type Version = Newtonsoft.Json.Linq.JToken
+type Uptime = System.Text.Json.JsonElement
+type Version = System.Text.Json.JsonElement
 
 [<RequireQualifiedAccess>]
 type GetAudits =
