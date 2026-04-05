@@ -230,6 +230,7 @@ module OpenApiHttp =
                 match part with
                 | Primitive value ->
                     let content = new StringContent(serializeValue value, Encoding.UTF8)
+                    content.Headers.Add("Content-Disposition", $"form-data; name=\"{key}\"")
                     multipartFormData.Add(content, key)
                 | File file ->
                     let content = new ByteArrayContent(file)
@@ -268,7 +269,8 @@ module OpenApiHttp =
             |> applyHeaders parts
 
         task {
-            let! response = httpClient.SendAsync(populatedRequest, cancellationToken)
+            use populatedRequest = populatedRequest
+            use! response = httpClient.SendAsync(populatedRequest, cancellationToken)
             let! content = response.Content.ReadAsStringAsync()
             return (response.StatusCode, content)
         }
@@ -288,7 +290,8 @@ module OpenApiHttp =
             |> applyHeaders parts
 
         task {
-            let! response = httpClient.SendAsync(populatedRequest, cancellationToken)
+            use populatedRequest = populatedRequest
+            use! response = httpClient.SendAsync(populatedRequest, cancellationToken)
             let! content = response.Content.ReadAsByteArrayAsync()
             return (response.StatusCode, content)
         }
