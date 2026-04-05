@@ -73,12 +73,13 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     member this.PostAuthRevokeToken
         (
             xAccessToken: string,
-            payload: PostAuthRevokeTokenPayload,
-            ?cancellationToken: CancellationToken
+            ?cancellationToken: CancellationToken,
+            ?payload: PostAuthRevokeTokenPayload
         ) =
         let requestParts =
             [ RequestPart.header ("x-access-token", xAccessToken)
-              RequestPart.jsonContent payload ]
+              if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/auth/revoke-token" requestParts cancellationToken
@@ -114,10 +115,11 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     ///<summary>
     ///Creates a new user taking token and new user data. Returns the new user data. An email is sent to the new user with instructions to log in.
     ///</summary>
-    member this.PostUsers(xAccessToken: string, payload: PostUsersPayload, ?cancellationToken: CancellationToken) =
+    member this.PostUsers(xAccessToken: string, ?cancellationToken: CancellationToken, ?payload: PostUsersPayload) =
         let requestParts =
             [ RequestPart.header ("x-access-token", xAccessToken)
-              RequestPart.jsonContent payload ]
+              if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/users" requestParts cancellationToken
@@ -1342,8 +1344,10 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     ///<summary>
     ///Assets card Info (bulk)
     ///</summary>
-    member this.PostAssetsbulk(payload: PostAssetsbulkPayload, ?cancellationToken: CancellationToken) =
-        let requestParts = [ RequestPart.jsonContent payload ]
+    member this.PostAssetsbulk(?cancellationToken: CancellationToken, ?payload: PostAssetsbulkPayload) =
+        let requestParts =
+            [ if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/assetsbulk" requestParts cancellationToken
@@ -3296,10 +3300,12 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     ///</summary>
     member this.PostAssetsQuickDialByIccid
         (
-            payload: PostAssetsQuickDialByIccidPayload,
-            ?cancellationToken: CancellationToken
+            ?cancellationToken: CancellationToken,
+            ?payload: PostAssetsQuickDialByIccidPayload
         ) =
-        let requestParts = [ RequestPart.jsonContent payload ]
+        let requestParts =
+            [ if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/assets/{iccid}/quick-dial" requestParts cancellationToken
@@ -3345,10 +3351,12 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     ///</summary>
     member this.PutAssetsQuickDialByIccidAndLocation
         (
-            payload: PutAssetsQuickDialByIccidAndLocationPayload,
-            ?cancellationToken: CancellationToken
+            ?cancellationToken: CancellationToken,
+            ?payload: PutAssetsQuickDialByIccidAndLocationPayload
         ) =
-        let requestParts = [ RequestPart.jsonContent payload ]
+        let requestParts =
+            [ if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.put httpClient "/assets/{iccid}/quick-dial/{location}" requestParts cancellationToken
@@ -3377,8 +3385,10 @@ type SyncPodiosuiteClient(httpClient: HttpClient) =
     ///<summary>
     ///Forces to make a MT voice call to a SIM. This function is used to make the client perform a task when it gets a call.
     ///</summary>
-    member this.PostAssetsDialByIccid(payload: PostAssetsDialByIccidPayload, ?cancellationToken: CancellationToken) =
-        let requestParts = [ RequestPart.jsonContent payload ]
+    member this.PostAssetsDialByIccid(?cancellationToken: CancellationToken, ?payload: PostAssetsDialByIccidPayload) =
+        let requestParts =
+            [ if payload.IsSome then
+                  RequestPart.jsonContent payload.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/assets/{iccid}/dial" requestParts cancellationToken

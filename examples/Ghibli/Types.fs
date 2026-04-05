@@ -222,7 +222,7 @@ type GetLocations =
 [<RequireQualifiedAccess>]
 type GetLocationsById =
     ///A single location is returned
-    | OK of payload: Newtonsoft.Json.Linq.JToken
+    | OK of payload: System.Text.Json.JsonElement
     ///Bad request
     | BadRequest
     ///Not found

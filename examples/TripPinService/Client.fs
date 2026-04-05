@@ -1465,14 +1465,13 @@ type TripPinServiceClient(httpClient: HttpClient) =
     ///Update media content for Photo in Photos
     ///</summary>
     ///<param name="id">key: Id of Photo</param>
-    ///<param name="cancellationToken"></param>
     ///<param name="requestBody"></param>
-    member this.PhotosPhotoUpdateContent(id: int64, ?cancellationToken: CancellationToken, ?requestBody: byte []) =
+    ///<param name="cancellationToken"></param>
+    member this.PhotosPhotoUpdateContent(id: int64, requestBody: byte [], ?cancellationToken: CancellationToken) =
         async {
             let requestParts =
                 [ RequestPart.path ("Id", id)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                  RequestPart.binaryContent requestBody ]
 
             let! (status, content) =
                 OpenApiHttp.putAsync httpClient "/Photos({Id})/$value" requestParts cancellationToken

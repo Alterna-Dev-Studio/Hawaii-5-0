@@ -9,12 +9,12 @@ open System.IO
 open System.Xml.Linq
 open System.Net
 open System.Collections.Generic
-open Newtonsoft.Json.Linq
+open System.Text.Json
 open System.Text
 open Microsoft.OpenApi.OData
 open Microsoft.OData.Edm.Csdl
 open Microsoft.OpenApi.Writers
-open Newtonsoft.Json
+open System.Text.Json.Nodes
 
 let logo = """
 
@@ -55,77 +55,105 @@ let readConfig file =
             Error $"Hawaii configuration file {file} was not found"
         else
         let content = File.ReadAllText(file)
-        let parts = JObject.Parse(content)
-        if not (parts.ContainsKey "schema") then
+        use doc = JsonDocument.Parse(content)
+        let parts = doc.RootElement
+        
+        let tryGetProperty (name: string) : JsonElement option =
+            let mutable prop = Unchecked.defaultof<JsonElement>
+            if parts.TryGetProperty(name, &prop) then
+                Some prop
+            else
+                None
+            
+        let propertyExists name = tryGetProperty name |> Option.isSome
+        
+        let getString (name: string) : string =
+            match tryGetProperty name with
+            | Some prop when prop.ValueKind = JsonValueKind.String -> prop.GetString()
+            | _ -> null
+            
+        let getBool (name: string) (defaultValue: bool) : bool =
+            match tryGetProperty name with
+            | Some prop when prop.ValueKind = JsonValueKind.True -> true
+            | Some prop when prop.ValueKind = JsonValueKind.False -> false
+            | _ -> defaultValue
+        
+        if not (propertyExists "schema") then
             Error "Missing required configuration element 'schema'"
-        elif isNotNull parts.["schema"] && parts.["schema"].Type <> JTokenType.String then
+        elif tryGetProperty "schema" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
             Error "Configuration element 'schema' must be a string"
-        elif not (parts.ContainsKey "output") then
+        elif not (propertyExists "output") then
             Error "Missing required configuration element 'output'"
-        elif not (parts.ContainsKey "project") then
+        elif not (propertyExists "project") then
             Error "Missing required configuration element 'project'"
-        elif isNotNull parts.["output"] && parts.["output"].Type <> JTokenType.String then
+        elif tryGetProperty "output" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
             Error "The 'output' configuration element must be a string"
-        elif isNotNull parts.["target"] && parts.["target"].Type <> JTokenType.String then
+        elif tryGetProperty "target" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
             Error "The 'target' configuration element must be a string"
-        elif isNotNull parts.["target"] && parts.["target"].ToObject<string>().ToLower().Trim() <> "fable" && parts.["target"].ToObject<string>().ToLower().Trim() <> "fsharp" && parts.["target"].ToObject<string>().ToLower().Trim() <> "fsharp-native" then
+        elif tryGetProperty "target" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
+            |> Option.exists (fun s -> let lower = s.ToLower().Trim() in lower <> "fable" && lower <> "fsharp" && lower <> "fsharp-native") then
             Error "The 'target' configuration element can only be 'fable', 'fsharp', or 'fsharp-native'"
-        elif isNotNull parts.["project"] && parts.["project"].Type <> JTokenType.String then
+        elif tryGetProperty "project" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
             Error "The 'project' configuration element must be a string"
-        elif isNotNull parts.["project"] && String.IsNullOrWhiteSpace(parts.["project"].ToString().Trim()) then
+        elif tryGetProperty "project" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
+            |> Option.exists String.IsNullOrWhiteSpace then
             Error "The 'project' configuration element cannot be empty"
-        elif isNotNull parts.["asyncReturnType"] && parts.["asyncReturnType"].Type <> JTokenType.String then
+        elif tryGetProperty "asyncReturnType" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
             Error "The 'asyncReturnType' configuration element must be a string"
-        elif isNotNull parts.["asyncReturnType"] && parts.["asyncReturnType"].ToObject<string>().ToLower().Trim() <> "task" && parts.["asyncReturnType"].ToObject<string>().ToLower().Trim() <> "async" then
+        elif tryGetProperty "asyncReturnType" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
+            |> Option.exists (fun s -> let lower = s.ToLower().Trim() in lower <> "task" && lower <> "async") then
             Error "The 'asyncReturnType' configuration element can only be 'async' (default) or 'task'"
-        elif isNotNull parts.["synchronous"] && parts.["synchronous"].Type <> JTokenType.Boolean then
+        elif tryGetProperty "synchronous" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.True && p.ValueKind <> JsonValueKind.False) then
             Error "The 'synchronous' configuration element must be a boolean"
-        elif isNotNull parts.["resolveReferences"] && parts.["resolveReferences"].Type <> JTokenType.Boolean then
+        elif tryGetProperty "resolveReferences" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.True && p.ValueKind <> JsonValueKind.False) then
             Error "The 'resolveReferences' configuration element must be a boolean"
-        elif isNotNull parts.["emptyDefinitions"] && parts.["emptyDefinitions"].ToObject<string>().ToLower().Trim() <> "ignore" && parts.["emptyDefinitions"].ToObject<string>().ToLower().Trim() <> "free-form" then
+        elif tryGetProperty "emptyDefinitions" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
+            |> Option.exists (fun s -> let lower = s.ToLower().Trim() in lower <> "ignore" && lower <> "free-form") then
             Error "The 'emptyDefinitions' configuration element must either be 'ignore' or 'free-form'"
         else
             let configParent = Path.GetDirectoryName file
+            let targetStr = getString "target"
+            let asyncReturnTypeStr = getString "asyncReturnType"
+            let emptyDefsStr = getString "emptyDefinitions"
+            
+            let filterTags =
+                match tryGetProperty "filterTags" with
+                | Some prop when prop.ValueKind = JsonValueKind.Array ->
+                    [ for tag in prop.EnumerateArray() do
+                        if tag.ValueKind = JsonValueKind.String then
+                            tag.GetString() ]
+                | _ -> []
+                
+            let overrideSchema =
+                match tryGetProperty "overrideSchema" with
+                | Some prop -> Some (prop.Clone())
+                | None -> None
+            
             Ok {
-                schema = parts.["schema"].ToObject<string>()
-                output = resolveRelativeFile configParent (parts.["output"].ToObject<string>())
-                project = parts.["project"].ToString().Replace("(", "").Replace(")", "")
+                schema = getString "schema"
+                output = resolveRelativeFile configParent (getString "output")
+                project = (getString "project").Replace("(", "").Replace(")", "")
                 target =
                     let targetValue =
-                        if isNotNull parts.["target"]
-                        then parts.["target"].ToString().ToLower().Trim()
+                        if not (isNull targetStr)
+                        then targetStr.ToLower().Trim()
                         else "fsharp"
                     match targetValue with
                     | "fable" -> Target.Fable
                     | "fsharp-native" -> Target.FSharpNative
                     | _ -> Target.FSharp
                 asyncReturnType =
-                    if isNotNull parts.["asyncReturnType"] && parts.["asyncReturnType"].ToString() = "task"
+                    if not (isNull asyncReturnTypeStr) && asyncReturnTypeStr = "task"
                     then AsyncReturnType.Task
                     else AsyncReturnType.Async
-                synchronous =
-                    if isNotNull parts.["synchronous"]
-                    then parts.["synchronous"].ToObject<bool>()
-                    else false
-                resolveReferences =
-                    if isNotNull parts.["resolveReferences"]
-                    then parts.["resolveReferences"].ToObject<bool>()
-                    else false
+                synchronous = getBool "synchronous" false
+                resolveReferences = getBool "resolveReferences" false
                 emptyDefinitions =
-                    if isNotNull parts.["emptyDefinitions"] && parts.["emptyDefinitions"].ToString() = "free-form"
+                    if not (isNull emptyDefsStr) && emptyDefsStr = "free-form"
                     then EmptyDefinitionResolution.GenerateFreeForm
                     else EmptyDefinitionResolution.Ignore
-                overrideSchema =
-                    if isNotNull parts.["overrideSchema"]
-                    then Some parts.["overrideSchema"]
-                    else None
-                filterTags =
-                    if isNotNull parts.["filterTags"] && parts.["filterTags"].Type = JTokenType.Array
-                    then [
-                            for tag in unbox<JArray> parts.["filterTags"] do
-                            if tag.Type = JTokenType.String then
-                                tag.ToObject<string>() ]
-                    else [ ]
+                overrideSchema = overrideSchema
+                filterTags = filterTags
                 odataSchema = false
             }
     with
@@ -182,70 +210,71 @@ let xmlDocsWithParams (description: string) (parameters: (string * string) seq) 
 
 let client = new HttpClient()
 
-let simplifyRedundantSchemaParts (schema: JObject) =
-    let rec iterate (part: JObject) =
-        let properties = List.ofSeq(part.Properties())
+let simplifyRedundantSchemaParts (schema: Nodes.JsonObject) =
+    let rec iterate (part: Nodes.JsonObject) =
+        let properties = List.ofSeq(part)
         for property in properties do
-            if property.Name.StartsWith "application/vnd" && property.Name.EndsWith "+json" && property.Value.Type = JTokenType.Object && not (part.ContainsKey "application/json") then
+            let kvp = property
+            if kvp.Key.StartsWith "application/vnd" && kvp.Key.EndsWith "+json" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object && not (part.ContainsKey "application/json") then
                 // rewrite JSON-like media types into application/json
-                let mediaType = unbox<JObject> property.Value
-                part.Add("application/json", mediaType)
-                part.Remove(property.Name) |> ignore
-            elif property.Name = "application/ld+json" && property.Value.Type = JTokenType.Object && not (part.ContainsKey "application/json") then
+                let mediaType = kvp.Value.AsObject()
+                part.Add("application/json", mediaType.DeepClone())
+                part.Remove(kvp.Key) |> ignore
+            elif kvp.Key = "application/ld+json" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object && not (part.ContainsKey "application/json") then
                 // rewrite JSON-like media types into application/json
-                let mediaType = unbox<JObject> property.Value
-                part.Add("application/json", mediaType)
-                part.Remove(property.Name) |> ignore
-            elif property.Name = "anyOf" && property.Value.Type = JTokenType.Array then
+                let mediaType = kvp.Value.AsObject()
+                part.Add("application/json", mediaType.DeepClone())
+                part.Remove(kvp.Key) |> ignore
+            elif kvp.Key = "anyOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
                 // simplify this shape
                 // { anyOf: [ first ] }
                 // into
                 // { ...first }
-                let anyOfArray = unbox<JArray> property.Value
-                if anyOfArray.Count = 1 && anyOfArray.[0].Type = JTokenType.Object then
-                    let innerObject = unbox<JObject> anyOfArray.[0]
-                    for innerProp in innerObject.Properties() do
-                        part.Add(innerProp)
+                let anyOfArray = kvp.Value.AsArray()
+                if anyOfArray.Count = 1 && anyOfArray.[0] <> null && anyOfArray.[0].GetValueKind() = JsonValueKind.Object then
+                    let innerObject = anyOfArray.[0].AsObject()
+                    for innerProp in innerObject do
+                        part.Add(innerProp.Key, innerProp.Value.DeepClone())
                     part.Remove("anyOf") |> ignore
-            elif property.Name = "oneOf" && property.Value.Type = JTokenType.Array then
+            elif kvp.Key = "oneOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
                 // simplify this shape
                 // { oneOf: [ first ] }
                 // into
                 // { ...first }
-                let oneOfArray = unbox<JArray> property.Value
-                if oneOfArray.Count = 1 && oneOfArray.[0].Type = JTokenType.Object then
-                    let innerObject = unbox<JObject> oneOfArray.[0]
-                    for innerProp in innerObject.Properties() do
-                        part.Add(innerProp)
+                let oneOfArray = kvp.Value.AsArray()
+                if oneOfArray.Count = 1 && oneOfArray.[0] <> null && oneOfArray.[0].GetValueKind() = JsonValueKind.Object then
+                    let innerObject = oneOfArray.[0].AsObject()
+                    for innerProp in innerObject do
+                        part.Add(innerProp.Key, innerProp.Value.DeepClone())
                     part.Remove("oneOf") |> ignore
-            elif property.Name = "allOf" && property.Value.Type = JTokenType.Array then
+            elif kvp.Key = "allOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
                 // simplify this shape
                 // { allOf: [ first, { "example": ... } ] }
                 // into
                 // { ...first }
-                let allOfArray = unbox<JArray> property.Value
-                if allOfArray.Count = 2 && allOfArray.[0].Type = JTokenType.Object && allOfArray.[1].Type = JTokenType.Object then
-                    let firstObject = unbox<JObject> allOfArray.[0]
-                    let secondObject = unbox<JObject> allOfArray.[1]
+                let allOfArray = kvp.Value.AsArray()
+                if allOfArray.Count = 2 && allOfArray.[0] <> null && allOfArray.[0].GetValueKind() = JsonValueKind.Object && allOfArray.[1] <> null && allOfArray.[1].GetValueKind() = JsonValueKind.Object then
+                    let firstObject = allOfArray.[0].AsObject()
+                    let secondObject = allOfArray.[1].AsObject()
                     if secondObject.Count = 1 && secondObject.ContainsKey "example" then
-                        for innerProp in firstObject.Properties() do
-                            part.Add(innerProp)
+                        for innerProp in firstObject do
+                            part.Add(innerProp.Key, innerProp.Value.DeepClone())
                         part.Remove("allOf") |> ignore
                     else
                         for element in allOfArray do
-                            if element.Type = JTokenType.Object then
-                                iterate (unbox<JObject> element)
+                            if element <> null && element.GetValueKind() = JsonValueKind.Object then
+                                iterate (element.AsObject())
                 else
                     for element in allOfArray do
-                        if element.Type = JTokenType.Object then
-                            iterate (unbox<JObject> element)
-            elif property.Value.Type = JTokenType.Array then
-                let elements = unbox<JArray> property.Value
+                        if element <> null && element.GetValueKind() = JsonValueKind.Object then
+                            iterate (element.AsObject())
+            elif kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
+                let elements = kvp.Value.AsArray()
                 for element in elements do
-                    if element.Type = JTokenType.Object then
-                        iterate (unbox<JObject> element)
-            if property.Value.Type = JTokenType.Object then
-                iterate (unbox<JObject> property.Value)
+                    if element <> null && element.GetValueKind() = JsonValueKind.Object then
+                        iterate (element.AsObject())
+            if kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object then
+                iterate (kvp.Value.AsObject())
 
     iterate schema
     schema
@@ -272,60 +301,72 @@ let readLocalODataSchema (schemaUrl: string) =
     let writer = OpenApiJsonWriter(stringTextWriter)
     openApiModel.SerializeAsV3(writer);
     stringTextWriter.ToString()
-
-let getSchema(schema: string) (overrideSchema: JToken option) =
+let getSchema(schema: string) (overrideSchema: JsonElement option) =
     let schemaContents =
         if File.Exists schema && schema.EndsWith ".json" then
             let content = File.ReadAllText schema
-            JObject.Parse(content)
+            JsonNode.Parse(content).AsObject()
         elif File.Exists schema && schema.EndsWith ".xml" then
             Console.WriteLine "Detected local OData schema"
             let openApiJson = readLocalODataSchema schema
-            JObject.Parse openApiJson
+            JsonNode.Parse(openApiJson).AsObject()
         elif schema.StartsWith "http" && schema.EndsWith "$metadata" then
             Console.WriteLine "Detected external OData schema"
             let openApiJson = readExternalODataSchema schema
-            JObject.Parse openApiJson
+            JsonNode.Parse(openApiJson).AsObject()
         elif schema.StartsWith "http" then
             let content =
                 client.GetStringAsync(schema)
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
-            JObject.Parse(content)
+            JsonNode.Parse(content).AsObject()
         else
             // assume the schema is coming in as a string
             // convert it into a memory stream
             // this is useful for unit tests
-            JObject.Parse(schema)
+            JsonNode.Parse(schema).AsObject()
 
     match overrideSchema with
     | None -> ()
-    | Some miniSchema -> schemaContents.Merge(miniSchema)
+    | Some miniSchema ->
+        // Recursively merge miniSchema into schemaContents (matching JObject.Merge behavior)
+        let rec mergeInto (target: JsonObject) (source: JsonObject) =
+            for kvp in source do
+                let mutable existing: JsonNode = null
+                if target.TryGetPropertyValue(kvp.Key, &existing) && existing <> null && existing.GetValueKind() = JsonValueKind.Object && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object then
+                    mergeInto (existing.AsObject()) (kvp.Value.AsObject())
+                else
+                    target.[kvp.Key] <- if kvp.Value <> null then kvp.Value.DeepClone() else null
+        let miniObj = JsonNode.Parse(miniSchema.GetRawText()).AsObject()
+        mergeInto schemaContents miniObj
 
     // Pre-process NSwag schemas and add { "produces": ["application/json"] } if missing for operations
     // we assume Hawaii is working with schemas that produce JSON
-    if schemaContents.ContainsKey "x-generator" && schemaContents.["x-generator"].ToObject<string>().StartsWith "NSwag" then
-        if schemaContents.ContainsKey "paths" && schemaContents.["paths"].Type = JTokenType.Object then
-            let pathsObject = unbox<JObject> schemaContents.["paths"]
-            for path in pathsObject.Properties() do
-                if path.Value.Type = JTokenType.Object then
-                    let operations = unbox<JObject> path.Value
-                    for operation in operations.Properties() do
-                        if operation.Value.Type = JTokenType.Object then
-                            let operationAsObject = unbox<JObject> operation.Value
+    let mutable xgen: JsonNode = null
+    if schemaContents.TryGetPropertyValue("x-generator", &xgen) && xgen <> null && xgen.GetValueKind() = JsonValueKind.String && xgen.GetValue<string>().StartsWith "NSwag" then
+        let mutable paths: JsonNode = null
+        if schemaContents.TryGetPropertyValue("paths", &paths) && paths <> null && paths.GetValueKind() = JsonValueKind.Object then
+            let pathsObject = paths.AsObject()
+            for path in pathsObject do
+                if path.Value <> null && path.Value.GetValueKind() = JsonValueKind.Object then
+                    let operations = path.Value.AsObject()
+                    for operation in operations do
+                        if operation.Value <> null && operation.Value.GetValueKind() = JsonValueKind.Object then
+                            let operationAsObject = operation.Value.AsObject()
                             if not (operationAsObject.ContainsKey "produces") then
-                                operationAsObject.Add(JProperty("produces", [| "application/json" |]))
+                                let jsonArray = JsonArray()
+                                jsonArray.Add(JsonValue.Create("application/json"))
+                                operationAsObject.Add("produces", jsonArray)
 
     let simplified = simplifyRedundantSchemaParts schemaContents
-    let simplifiedContents = simplified.ToString()
+    let simplifiedContents = simplified.ToJsonString()
     if simplifiedContents.Contains "#/components/schemas/odata.error" then
-        simplified.Add(JProperty("x-odata", true))
-        let schemaBytes = System.Text.Encoding.UTF8.GetBytes(simplified.ToString())
+        simplified.Add("x-odata", JsonValue.Create(true))
+        let schemaBytes = System.Text.Encoding.UTF8.GetBytes(simplified.ToJsonString())
         new MemoryStream(schemaBytes) :> Stream
     else
         let schemaBytes = System.Text.Encoding.UTF8.GetBytes simplifiedContents
         new MemoryStream(schemaBytes) :> Stream
-
 let nextTick (name: string) (visited: ResizeArray<string>) =
     if not (visited.Contains name) then
         name
@@ -335,9 +376,10 @@ let nextTick (name: string) (visited: ResizeArray<string>) =
     |> List.filter (fun visitedName -> visitedName.StartsWith name)
     |> List.map (fun visitedName -> visitedName.Replace(name, ""))
     |> List.choose(fun rest ->
-        match Int32.TryParse rest with
-        | true, n -> Some n
-        | _ -> None)
+        let mutable n = 0
+        match Int32.TryParse(rest, &n) with
+        | true -> Some n
+        | false -> None)
     |> function
         | [ ] -> name + "1"
         | ns -> name + (string (List.max ns + 1))
@@ -1065,12 +1107,12 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
                 if required
                 then
                     if isFSharpTarget config.target
-                    then SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray"
+                    then SynType.CreateLongIdent "System.Text.Json.JsonElement"
                     else SynType.ResizeArray(SynType.Create "obj")
 
                 else
                     if isFSharpTarget config.target
-                    then SynType.Option (SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray")
+                    then SynType.Option (SynType.CreateLongIdent "System.Text.Json.JsonElement")
                     else SynType.Option(SynType.ResizeArray(SynType.Create "obj"))
 
             Some fieldType
@@ -1160,7 +1202,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             let recordField = SynFieldRcd.Create(odataTypeNameField, fieldType)
             let attributes = SynAttributeList.Create [
                 // create [<JsonProperty "@odata.type">]
-                SynAttribute.Create([ Ident.Create "Newtonsoft"; Ident.Create "Json"; Ident.Create "JsonProperty" ], SynConst.CreateString "@odata.type")
+                SynAttribute.Create([ Ident.Create "System"; Ident.Create "Text"; Ident.Create "Json"; Ident.Create "Serialization"; Ident.Create "JsonPropertyName" ], SynConst.CreateString "@odata.type")
             ]
             recordFields.Insert(0, { recordField with Attributes = [ attributes ] })
             addedFields.Insert(0, (odataTypeNameField, required, fieldType))
@@ -1318,7 +1360,7 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
             // element type schema is null
             let elementType =
                 if isFSharpTarget config.target
-                then SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray"
+                then SynType.CreateLongIdent "System.Text.Json.JsonElement"
                 else SynType.ResizeArray(SynType.Create "obj")
 
             if config.odataSchema && wrapODataResponse
@@ -1529,7 +1571,7 @@ let createODataResponse(config: CodegenConfig) =
 
     let attributes = SynAttributeList.Create [
         // [<JsonProperty "@odata.context">]
-        SynAttribute.Create([ Ident.Create "Newtonsoft"; Ident.Create "Json"; Ident.Create "JsonProperty" ], SynConst.CreateString "@odata.context")
+        SynAttribute.Create([ Ident.Create "System"; Ident.Create "Text"; Ident.Create "Json"; Ident.Create "Serialization"; Ident.Create "JsonPropertyName" ], SynConst.CreateString "@odata.context")
     ]
 
     let odataContextField = SynFieldRcd.Create("ODataContext", SynType.Option(SynType.String()))
@@ -2609,7 +2651,7 @@ let rec deleteFilesAndFolders directory isRoot =
         if not isRoot then Directory.Delete subdirectory
 
 let path xs = Path.Combine(Array.ofList xs)
-let write content filePath = File.WriteAllText(path filePath, content)
+let write (content: string) filePath = File.WriteAllText(path filePath, content)
 
 let generateProjectDocument
     (packageReferences: XElement seq)
@@ -2643,7 +2685,7 @@ let generateProjectDocument
         })
     )
 
-let getJsonPart (url: string) : JObject option =
+let getJsonPart (url: string) : Nodes.JsonObject option =
     match url.Split('#', StringSplitOptions.RemoveEmptyEntries) with
     | [| schemaUrl; path |] ->
         let schemaContent =
@@ -2651,16 +2693,29 @@ let getJsonPart (url: string) : JObject option =
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
-        let schemaJson = JObject.Parse(schemaContent)
+        let schemaJson = JsonNode.Parse(schemaContent).AsObject()
 
-        let jsonPath =
+        let jsonPathParts =
             path.Split('/', StringSplitOptions.RemoveEmptyEntries)
-            |> String.concat "."
-
-        let token = schemaJson.SelectToken(jsonPath)
-        if token.Type = JTokenType.Object
-        then Some (unbox<JObject> token)
-        else None
+        
+        // Navigate through the JSON path
+        let mutable current: JsonNode = schemaJson
+        let mutable found = true
+        for part in jsonPathParts do
+            if found && current <> null && current.GetValueKind() = JsonValueKind.Object then
+                let obj = current.AsObject()
+                let mutable value: JsonNode = null
+                if obj.TryGetPropertyValue(part, &value) then
+                    current <- value
+                else
+                    found <- false
+            else
+                found <- false
+        
+        if found && current <> null && current.GetValueKind() = JsonValueKind.Object then
+            Some (current.AsObject())
+        else
+            None
 
     | [| schemaUrl |] ->
         let schemaContent =
@@ -2668,36 +2723,37 @@ let getJsonPart (url: string) : JObject option =
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
-        let schemaJson = JObject.Parse(schemaContent)
+        let schemaJson = JsonNode.Parse(schemaContent).AsObject()
         Some schemaJson
 
     | _ ->
         None
 
-let preprocessRelativeExternalReferences (schema: JObject) (url: string) =
-    let rec iterate (part: JObject) =
-        let properties = List.ofSeq(part.Properties())
+let preprocessRelativeExternalReferences (schema: Nodes.JsonObject) (url: string) =
+    let rec iterate (part: Nodes.JsonObject) =
+        let properties = List.ofSeq(part)
         for property in properties do
-            if property.Value.Type = JTokenType.Object then
-                iterate (unbox<JObject> property.Value)
-            elif property.Value.Type = JTokenType.Array then
-                let elements = unbox<JArray> property.Value
+            let kvp = property
+            if kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object then
+                iterate (kvp.Value.AsObject())
+            elif kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
+                let elements = kvp.Value.AsArray()
                 for element in elements do
-                    if element.Type = JTokenType.Object then
-                        iterate (unbox<JObject> element)
-            elif property.Name = "$ref" && property.Value.Type = JTokenType.String then
-                let refUrl = property.Value.ToObject<string>()
+                    if element <> null && element.GetValueKind() = JsonValueKind.Object then
+                        iterate (element.AsObject())
+            elif kvp.Key = "$ref" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.String then
+                let refUrl = kvp.Value.GetValue<string>()
                 // not absolute && not local -> relative
                 if not (refUrl.StartsWith "http") && not (refUrl.StartsWith "#") then
                     // relative url
                     let modifiedUrl = Uri(Uri(url), refUrl)
                     match getJsonPart modifiedUrl.AbsoluteUri with
                     | Some resolvedObject ->
-                        part.RemoveAll()
-                        for resolvedProp in resolvedObject.Properties() do
-                            part.Add(resolvedProp)
+                        part.Clear()
+                        for resolvedProp in resolvedObject do
+                            part.Add(resolvedProp.Key, resolvedProp.Value.DeepClone())
                     | None ->
-                        property.Value <- JValue modifiedUrl.AbsoluteUri
+                        part.[kvp.Key] <- JsonValue.Create(modifiedUrl.AbsoluteUri)
                 else
                     ()
 
@@ -2742,9 +2798,9 @@ let runConfig filePath =
                     |> Async.AwaitTask
                     |> Async.RunSynchronously
 
-                let schemaJson = JObject.Parse(schemaContent)
+                let schemaJson = JsonNode.Parse(schemaContent).AsObject()
                 let processedSchema = preprocessRelativeExternalReferences schemaJson config.schema
-                getSchema (processedSchema.ToString()) config.overrideSchema
+                getSchema (processedSchema.ToJsonString()) config.overrideSchema
 
             elif config.schema.StartsWith "http" && config.schema.EndsWith ".json" then
                 getSchema config.schema config.overrideSchema
@@ -2794,8 +2850,7 @@ let runConfig filePath =
             let projectFile =
                 let packages = [
                     if isFSharpTarget config.target then
-                        XElement.PackageReference("Fable.Remoting.Json", "2.18.0")
-                        XElement.PackageReference("Newtonsoft.Json", "13.0.1")
+                        XElement.PackageReference("FSharp.SystemTextJson", "1.3.13")
                         if config.asyncReturnType = AsyncReturnType.Task
                         then XElement.PackageReference("Ply", "0.3.1")
                     else
@@ -2818,9 +2873,7 @@ let runConfig filePath =
                 generateProjectDocument packages files copyLocalLockFileAssemblies contentItems projectReferences
 
             if isFSharpTarget config.target then
-                let includeFableJsonConverter = true
-                let includeJTokenPassthrough = config.target = Target.FSharpNative
-                let httpLibrary = HttpLibrary.library (config.asyncReturnType = AsyncReturnType.Task) config.project includeFableJsonConverter includeJTokenPassthrough
+                let httpLibrary = HttpLibrary.library (config.asyncReturnType = AsyncReturnType.Task) config.project
                 write httpLibrary [ outputDir; "OpenApiHttp.fs" ]
                 write CodeGen.stringEnumAttr [ outputDir; "StringEnum.fs" ]
             else
@@ -2846,7 +2899,7 @@ let showTags filePath =
                     |> Async.AwaitTask
                     |> Async.RunSynchronously
 
-                let schemaJson = JObject.Parse(schemaContent)
+                let schemaJson = JsonNode.Parse(schemaContent).AsObject()
                 let processedSchema = preprocessRelativeExternalReferences schemaJson config.schema
                 getSchema (processedSchema.ToString()) config.overrideSchema
 
@@ -2928,14 +2981,14 @@ let main argv =
                 then schema
                 else $"{schema.TrimEnd '/'}/$metadata"
             let openApiSchema = readExternalODataSchema schemaWithMetadata
-            let simplified = simplifyRedundantSchemaParts (JObject.Parse openApiSchema)
-            File.WriteAllText(resolveFile output, simplified.ToString(Formatting.Indented))
+            let simplified = simplifyRedundantSchemaParts (JsonNode.Parse(openApiSchema).AsObject())
+            File.WriteAllText(resolveFile output, simplified.ToJsonString(JsonSerializerOptions(WriteIndented = true)))
             printfn "Generated OpenAPI specs saved as %s" (resolveFile output)
             0
         elif schema.EndsWith ".xml" && File.Exists (resolveFile schema) then
             let openApiSchema = readLocalODataSchema schema
-            let simplified = simplifyRedundantSchemaParts (JObject.Parse openApiSchema)
-            File.WriteAllText(resolveFile output, simplified.ToString(Formatting.Indented))
+            let simplified = simplifyRedundantSchemaParts (JsonNode.Parse(openApiSchema).AsObject())
+            File.WriteAllText(resolveFile output, simplified.ToJsonString(JsonSerializerOptions(WriteIndented = true)))
             printfn "Generated OpenAPI specs saved as %s" (resolveFile output)
             0
         else

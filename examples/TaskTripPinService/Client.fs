@@ -1279,12 +1279,11 @@ type TaskTripPinServiceClient(url: string, headers: list<Header>) =
     ///</summary>
     ///<param name="id">key: Id of Photo</param>
     ///<param name="requestBody"></param>
-    member this.PhotosPhotoUpdateContent(id: int64, ?requestBody: byte []) =
+    member this.PhotosPhotoUpdateContent(id: int64, requestBody: byte []) =
         async {
             let requestParts =
                 [ RequestPart.path ("Id", id)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                  RequestPart.binaryContent requestBody ]
 
             let! (status, content) = OpenApiHttp.putAsync url "/Photos({Id})/$value" headers requestParts
 
