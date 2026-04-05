@@ -1991,7 +1991,7 @@ let createOpenApiClient
                         if parameter.required then
                             if parameter.properties.Length = 0 then
                                 yield SynExpr.CreatePartialApp(["RequestPart"; parameter.location], [
-                                    if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" then
+                                    if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" && parameter.location <> "textContent" then
                                         SynExpr.CreateParen(SynExpr.CreateTuple [
                                             stringExpr parameter.parameterName
                                             createIdent [ parameter.parameterIdent ]
@@ -2012,7 +2012,7 @@ let createOpenApiClient
                             let value =
                                 if parameter.properties.Length = 0 then
                                     SynExpr.CreatePartialApp([ "RequestPart"; parameter.location ], [
-                                        if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" then
+                                        if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" && parameter.location <> "textContent" then
                                             SynExpr.CreateParen(SynExpr.CreateTuple [
                                                 stringExpr parameter.parameterName
                                                 createIdent [ parameter.parameterIdent; "Value" ]

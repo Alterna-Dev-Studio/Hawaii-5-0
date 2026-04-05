@@ -294,6 +294,19 @@ let private processOperationRequestBody
                 style = "formfield"
                 properties = []
             }]
+
+        elif content.ContainsKey "text/plain" then
+            [{
+                parameterName = "requestBody"
+                parameterIdent = "requestBody"
+                required = false
+                parameterType = SynType.String()
+                docs = ""
+                location = "textContent"
+                style = "formfield"
+                properties = []
+            }]
+
         else []
 
 let operationParameters

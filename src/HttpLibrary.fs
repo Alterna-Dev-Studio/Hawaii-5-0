@@ -43,6 +43,7 @@ type RequestPart =
     | JsonContent of string
     | BinaryContent of byte[]
     | Ignore
+    | TextContent of string
 
     static member query(key: string, value: int) = Query(key, OpenApiValue.Int value)
     static member query(key: string, values: int list) = Query(key, OpenApiValue.List [ for value in values -> OpenApiValue.Int value ])
@@ -144,6 +145,7 @@ type RequestPart =
     static member header(key: string, value: DateTimeOffset) = Header(key, OpenApiValue.String (value.ToString("O")))
     static member jsonContent<'t>(content: 't) = JsonContent(Serializer.serialize content)
     static member binaryContent(content: byte[]) = BinaryContent(content)
+    static member textContent(content: string) = TextContent(content)
 
 module OpenApiHttp =
     let rec serializeValue = function
@@ -198,6 +200,15 @@ module OpenApiHttp =
             match part with
             | BinaryContent content ->
                 httpRequest.Content <- new ByteArrayContent(content)
+            | _ -> ()
+
+        httpRequest
+
+    let applyTextContent (parts: RequestPart list) (httpRequest: HttpRequestMessage) =
+        for part in parts do
+            match part with
+            | TextContent content ->
+                httpRequest.Content <- new StringContent(content)
             | _ -> ()
 
         httpRequest
@@ -266,6 +277,7 @@ module OpenApiHttp =
             request
             |> applyJsonContent parts
             |> applyBinaryContent parts
+            |> applyTextContent parts
             |> applyUrlEncodedFormData parts
             |> applyMultiPartFormData parts
             |> applyHeaders parts
@@ -287,6 +299,7 @@ module OpenApiHttp =
             request
             |> applyJsonContent parts
             |> applyBinaryContent parts
+            |> applyTextContent parts
             |> applyUrlEncodedFormData parts
             |> applyMultiPartFormData parts
             |> applyHeaders parts
@@ -591,6 +604,7 @@ type RequestPart =
     | JsonContent of string
     | BinaryContent of byte[]
     | Ignore
+    | TextContent of string
 
     static member query(key: string, value: int) = Query(key, OpenApiValue.Int value)
     static member query(key: string, values: int list) = Query(key, OpenApiValue.List [ for value in values -> OpenApiValue.Int value ])
@@ -692,6 +706,7 @@ type RequestPart =
     static member header(key: string, value: DateTimeOffset) = Header(key, OpenApiValue.String (value.ToString("O")))
     static member inline jsonContent<'t>(content: 't) = JsonContent(Serializer.serialize content)
     static member binaryContent(content: byte[]) = BinaryContent(content)
+    static member textContent(content: string) = TextContent(content)
 
 module OpenApiHttp =
     let rec serializeValue = function
@@ -745,6 +760,18 @@ module OpenApiHttp =
                 httpRequest
                 |> Http.header (Headers.contentType "application/json")
                 |> Http.content (BodyContent.Text json)
+                |> Some
+            | _ -> None)
+        |> Seq.tryHead
+        |> Option.defaultValue httpRequest
+
+    let applyTextRequestBody (parts: RequestPart list) (httpRequest: HttpRequest) =
+        parts
+        |> Seq.choose (function
+            | TextContent textContent ->
+                httpRequest
+                |> Http.header (Headers.contentType "text/plain")
+                |> Http.content (BodyContent.Text textContent)
                 |> Some
             | _ -> None)
         |> Seq.tryHead
@@ -805,6 +832,7 @@ module OpenApiHttp =
                 Http.request fullPath
                 |> Http.method method
                 |> applyJsonRequestBody parts
+                |> applyTextRequestBody parts
                 |> applyMultipartFormData parts
                 |> applyUrlEncodedFormData parts
                 |> applyHeaders parts
@@ -826,6 +854,7 @@ module OpenApiHttp =
                 Http.request fullPath
                 |> Http.method method
                 |> applyJsonRequestBody parts
+                |> applyTextRequestBody parts
                 |> applyMultipartFormData parts
                 |> applyUrlEncodedFormData parts
                 |> Http.headers extraHeaders
