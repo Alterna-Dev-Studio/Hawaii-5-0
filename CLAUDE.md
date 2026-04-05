@@ -15,7 +15,7 @@ cd build
 dotnet run -- build              # Build in Release configuration
 dotnet run -- pack               # Build, pack, and install locally as dotnet tool
 dotnet run -- publish            # Pack and push to NuGet (requires NUGET_KEY env var)
-dotnet run -- generate-and-build # Full test: regenerate all 38 example projects and compile them
+dotnet run -- generate-and-build # Full test: regenerate all example projects and compile them
 dotnet run -- integration        # Test against 10 live API schemas
 dotnet run -- rate {n}           # Test against first n of ~2000 API Guru schemas
 ```
@@ -29,7 +29,7 @@ There is no unit test project. Testing is integration-only via `generate-and-bui
 ```
 hawaii.json config
   -> Program.fs: readConfig -> CodegenConfig record
-  -> Program.fs: getSchema -> loads JSON/YAML/OData, merges overrideSchema
+  -> Program.fs: getSchema -> loads local/remote JSON and XML (OData), merges overrideSchema; remote YAML bypasses getSchema (raw stream), so overrideSchema does not apply
   -> Microsoft.OpenApi.Readers: parses into OpenApiDocument
   -> Program.fs: createGlobalTypesModule -> F# AST for Types.fs (records, enums, response DUs)
   -> Program.fs: createOpenApiClient -> F# AST for Client.fs (HTTP client class)

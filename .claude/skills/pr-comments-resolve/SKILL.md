@@ -120,8 +120,8 @@ Determine one of four dispositions:
 ### For Agree
 
 1. Make the code change following project conventions
-2. Run the affected test suite(s) — `dotnet run -- TestUnit`, `TestIntegration`, or `TestE2E` as appropriate
-3. Read the relevant `test-results/*.xml` to verify all tests pass
+2. Run the affected repository check(s) using the documented build targets — `cd build && dotnet run -- generate-and-build` for codegen changes, `dotnet run -- integration` for integration validation
+3. Verify the selected command(s) completed successfully by checking their output and exit status
 4. **If you believe a failure is unrelated to your changes**, you MUST follow the Test Failure Triage Protocol in `.claude/skills/shared/test-failure-triage.md` before dismissing it.
 5. Commit with a descriptive message:
    ```
