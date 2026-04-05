@@ -365,10 +365,11 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new directory to watch for incoming DICOM files
     ///</summary>
-    member this.PostDirectorywatches(watchedDirectory: watchedDirectory, ?cancellationToken: CancellationToken) =
+    member this.PostDirectorywatches(?cancellationToken: CancellationToken, ?watchedDirectory: watchedDirectory) =
         task {
             let requestParts =
-                [ RequestPart.jsonContent watchedDirectory ]
+                [ if watchedDirectory.IsSome then
+                      RequestPart.jsonContent watchedDirectory.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync httpClient "/directorywatches" requestParts cancellationToken
             return PostDirectorywatches.Created(Serializer.deserialize content)
@@ -585,10 +586,11 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new forwarding rule
     ///</summary>
-    member this.PostForwardingRules(fowardingRule: forwardingrule, ?cancellationToken: CancellationToken) =
+    member this.PostForwardingRules(?cancellationToken: CancellationToken, ?fowardingRule: forwardingrule) =
         task {
             let requestParts =
-                [ RequestPart.jsonContent fowardingRule ]
+                [ if fowardingRule.IsSome then
+                      RequestPart.jsonContent fowardingRule.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync httpClient "/forwarding/rules" requestParts cancellationToken
             return PostForwardingRules.Created(Serializer.deserialize content)
@@ -597,9 +599,12 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a DICOM dataset to slicebox
     ///</summary>
-    member this.PostImages(body: string, ?cancellationToken: CancellationToken) =
+    member this.PostImages(?cancellationToken: CancellationToken, ?body: string) =
         task {
-            let requestParts = [ RequestPart.jsonContent body ]
+            let requestParts =
+                [ if body.IsSome then
+                      RequestPart.jsonContent body.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync httpClient "/images" requestParts cancellationToken
 
             match int status with
@@ -653,23 +658,22 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///add a JPEG image to slicebox. The image data will be wrapped in a DICOM file and added as a new series belonging to the study with the supplied ID
     ///</summary>
     ///<param name="studyid">ID of study to add new series to</param>
+    ///<param name="requestBody"></param>
     ///<param name="description">DICOM series description of the resulting secondary capture series</param>
     ///<param name="cancellationToken"></param>
-    ///<param name="requestBody"></param>
     member this.PostImagesJpeg
         (
             studyid: int64,
+            requestBody: byte [],
             ?description: string,
-            ?cancellationToken: CancellationToken,
-            ?requestBody: byte []
+            ?cancellationToken: CancellationToken
         ) =
         task {
             let requestParts =
                 [ RequestPart.query ("studyid", studyid)
+                  RequestPart.binaryContent requestBody
                   if description.IsSome then
-                      RequestPart.query ("description", description.Value)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                      RequestPart.query ("description", description.Value) ]
 
             let! (status, content) = OpenApiHttp.postAsync httpClient "/images/jpeg" requestParts cancellationToken
             return PostImagesJpeg.Created(Serializer.deserialize content)
@@ -932,13 +936,14 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///add a DICOM dataset to the import session with the supplied ID
     ///</summary>
     ///<param name="id">ID of session</param>
-    ///<param name="body"></param>
     ///<param name="cancellationToken"></param>
-    member this.PostImportSessionsImagesById(id: int64, body: string, ?cancellationToken: CancellationToken) =
+    ///<param name="body"></param>
+    member this.PostImportSessionsImagesById(id: int64, ?cancellationToken: CancellationToken, ?body: string) =
         task {
             let requestParts =
                 [ RequestPart.path ("id", id)
-                  RequestPart.jsonContent body ]
+                  if body.IsSome then
+                      RequestPart.jsonContent body.Value ]
 
             let! (status, content) =
                 OpenApiHttp.postAsync httpClient "/import/sessions/{id}/images" requestParts cancellationToken
@@ -1619,9 +1624,12 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new SCP for receiving DICOM images
     ///</summary>
-    member this.PostScps(scp: scp, ?cancellationToken: CancellationToken) =
+    member this.PostScps(?cancellationToken: CancellationToken, ?scp: scp) =
         task {
-            let requestParts = [ RequestPart.jsonContent scp ]
+            let requestParts =
+                [ if scp.IsSome then
+                      RequestPart.jsonContent scp.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync httpClient "/scps" requestParts cancellationToken
 
             match int status with
@@ -1662,9 +1670,12 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new SCU for sending DICOM images
     ///</summary>
-    member this.PostScus(scu: scu, ?cancellationToken: CancellationToken) =
+    member this.PostScus(?cancellationToken: CancellationToken, ?scu: scu) =
         task {
-            let requestParts = [ RequestPart.jsonContent scu ]
+            let requestParts =
+                [ if scu.IsSome then
+                      RequestPart.jsonContent scu.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync httpClient "/scus" requestParts cancellationToken
 
             match int status with
@@ -1724,9 +1735,12 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new series type
     ///</summary>
-    member this.PostSeriestypes(seriesType: seriestype, ?cancellationToken: CancellationToken) =
+    member this.PostSeriestypes(?cancellationToken: CancellationToken, ?seriesType: seriestype) =
         task {
-            let requestParts = [ RequestPart.jsonContent seriesType ]
+            let requestParts =
+                [ if seriesType.IsSome then
+                      RequestPart.jsonContent seriesType.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync httpClient "/seriestypes" requestParts cancellationToken
             return PostSeriestypes.Created(Serializer.deserialize content)
         }
@@ -1748,10 +1762,11 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a new series type rule
     ///</summary>
-    member this.PostSeriestypesRules(seriesTypeRule: seriestyperule, ?cancellationToken: CancellationToken) =
+    member this.PostSeriestypesRules(?cancellationToken: CancellationToken, ?seriesTypeRule: seriestyperule) =
         task {
             let requestParts =
-                [ RequestPart.jsonContent seriesTypeRule ]
+                [ if seriesTypeRule.IsSome then
+                      RequestPart.jsonContent seriesTypeRule.Value ]
 
             let! (status, content) =
                 OpenApiHttp.postAsync httpClient "/seriestypes/rules" requestParts cancellationToken
@@ -1806,18 +1821,19 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///add a new series type rule attribute
     ///</summary>
     ///<param name="id">ID of rule</param>
-    ///<param name="seriesTypeRuleAttribute"></param>
     ///<param name="cancellationToken"></param>
+    ///<param name="seriesTypeRuleAttribute"></param>
     member this.PostSeriestypesRulesAttributesById
         (
             id: int64,
-            seriesTypeRuleAttribute: seriestyperuleattribute,
-            ?cancellationToken: CancellationToken
+            ?cancellationToken: CancellationToken,
+            ?seriesTypeRuleAttribute: seriestyperuleattribute
         ) =
         task {
             let requestParts =
                 [ RequestPart.path ("id", id)
-                  RequestPart.jsonContent seriesTypeRuleAttribute ]
+                  if seriesTypeRuleAttribute.IsSome then
+                      RequestPart.jsonContent seriesTypeRuleAttribute.Value ]
 
             let! (status, content) =
                 OpenApiHttp.postAsync httpClient "/seriestypes/rules/{id}/attributes" requestParts cancellationToken
@@ -1929,16 +1945,16 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<param name="transactionid">the ID of the client's outgoing transaction</param>
     ///<param name="sequencenumber">the index of this image in the transaction</param>
     ///<param name="totalimagecount">the total number of images in this transaction</param>
-    ///<param name="cancellationToken"></param>
     ///<param name="requestBody"></param>
+    ///<param name="cancellationToken"></param>
     member this.PostTransactionsImageByToken
         (
             token: string,
             transactionid: int64,
             sequencenumber: int64,
             totalimagecount: int64,
-            ?cancellationToken: CancellationToken,
-            ?requestBody: byte []
+            requestBody: byte [],
+            ?cancellationToken: CancellationToken
         ) =
         task {
             let requestParts =
@@ -1946,8 +1962,7 @@ type TaskSliceboxClient(httpClient: HttpClient) =
                   RequestPart.query ("transactionid", transactionid)
                   RequestPart.query ("sequencenumber", sequencenumber)
                   RequestPart.query ("totalimagecount", totalimagecount)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                  RequestPart.binaryContent requestBody ]
 
             let! (status, content) =
                 OpenApiHttp.postAsync httpClient "/transactions/{token}/image" requestParts cancellationToken

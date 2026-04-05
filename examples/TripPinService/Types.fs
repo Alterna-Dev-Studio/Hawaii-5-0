@@ -1,7 +1,7 @@
 namespace rec TripPinService.Types
 
 type ODataResponse<'TValue> =
-    { [<Newtonsoft.Json.JsonProperty "@odata.context">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.context">]
       ODataContext: Option<string>
       value: 'TValue }
 
@@ -19,7 +19,7 @@ type MicrosoftODataSampleServiceModelsTripPinPersonGender =
 type GeoJSONposition = list<float>
 
 type MicrosoftODataSampleServiceModelsTripPinCity =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       CountryRegion: Option<string>
       Name: Option<string>
@@ -32,7 +32,7 @@ type MicrosoftODataSampleServiceModelsTripPinCity =
           Region = None }
 
 type MicrosoftODataSampleServiceModelsTripPinLocation =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       Address: Option<string>
       City: Option<MicrosoftODataSampleServiceModelsTripPinCity> }
@@ -43,7 +43,7 @@ type MicrosoftODataSampleServiceModelsTripPinLocation =
           City = None }
 
 type MicrosoftODataSampleServiceModelsTripPinEventLocation =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       Address: Option<string>
       City: Option<MicrosoftODataSampleServiceModelsTripPinCity>
@@ -56,7 +56,7 @@ type MicrosoftODataSampleServiceModelsTripPinEventLocation =
           BuildingInfo = None }
 
 type MicrosoftODataSampleServiceModelsTripPinAirportLocation =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       Address: Option<string>
       City: Option<MicrosoftODataSampleServiceModelsTripPinCity>
@@ -69,7 +69,7 @@ type MicrosoftODataSampleServiceModelsTripPinAirportLocation =
           Loc = None }
 
 type MicrosoftODataSampleServiceModelsTripPinPhoto =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       Id: Option<int64>
       Name: Option<string> }
@@ -80,7 +80,7 @@ type MicrosoftODataSampleServiceModelsTripPinPhoto =
           Name = None }
 
 type MicrosoftODataSampleServiceModelsTripPinPerson =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       UserName: Option<string>
       FirstName: Option<string>
@@ -107,7 +107,7 @@ type MicrosoftODataSampleServiceModelsTripPinPerson =
           Photo = None }
 
 type MicrosoftODataSampleServiceModelsTripPinAirline =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       AirlineCode: Option<string>
       Name: Option<string> }
@@ -118,12 +118,12 @@ type MicrosoftODataSampleServiceModelsTripPinAirline =
           Name = None }
 
 type MicrosoftODataSampleServiceModelsTripPinAirport =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       IcaoCode: Option<string>
       Name: Option<string>
       IataCode: Option<string>
-      Location: Option<Newtonsoft.Json.Linq.JToken> }
+      Location: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of MicrosoftODataSampleServiceModelsTripPinAirport with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): MicrosoftODataSampleServiceModelsTripPinAirport =
         { ODataTypeName = Some "#Microsoft.OData.SampleService.Models.TripPin.Airport"
@@ -133,7 +133,7 @@ type MicrosoftODataSampleServiceModelsTripPinAirport =
           Location = None }
 
 type MicrosoftODataSampleServiceModelsTripPinPlanItem =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       PlanItemId: Option<int>
       ConfirmationCode: Option<string>
@@ -150,7 +150,7 @@ type MicrosoftODataSampleServiceModelsTripPinPlanItem =
           Duration = None }
 
 type MicrosoftODataSampleServiceModelsTripPinPublicTransportation =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       PlanItemId: Option<int>
       ConfirmationCode: Option<string>
@@ -169,7 +169,7 @@ type MicrosoftODataSampleServiceModelsTripPinPublicTransportation =
           SeatNumber = None }
 
 type MicrosoftODataSampleServiceModelsTripPinFlight =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       PlanItemId: Option<int>
       ConfirmationCode: Option<string>
@@ -196,7 +196,7 @@ type MicrosoftODataSampleServiceModelsTripPinFlight =
           Airline = None }
 
 type MicrosoftODataSampleServiceModelsTripPinEvent =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       PlanItemId: Option<int>
       ConfirmationCode: Option<string>
@@ -204,7 +204,7 @@ type MicrosoftODataSampleServiceModelsTripPinEvent =
       EndsAt: Option<System.DateTimeOffset>
       Duration: Option<string>
       Description: Option<string>
-      OccursAt: Option<Newtonsoft.Json.Linq.JToken> }
+      OccursAt: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of MicrosoftODataSampleServiceModelsTripPinEvent with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): MicrosoftODataSampleServiceModelsTripPinEvent =
         { ODataTypeName = Some "#Microsoft.OData.SampleService.Models.TripPin.Event"
@@ -217,13 +217,13 @@ type MicrosoftODataSampleServiceModelsTripPinEvent =
           OccursAt = None }
 
 type MicrosoftODataSampleServiceModelsTripPinTrip =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       TripId: Option<int>
       ShareId: Option<System.Guid>
       Description: Option<string>
       Name: Option<string>
-      Budget: Option<Newtonsoft.Json.Linq.JToken>
+      Budget: Option<System.Text.Json.JsonElement>
       StartsAt: Option<System.DateTimeOffset>
       EndsAt: Option<System.DateTimeOffset>
       Tags: Option<list<string>>
@@ -243,7 +243,7 @@ type MicrosoftODataSampleServiceModelsTripPinTrip =
           Photos = None
           PlanItems = None }
 
-type EdmGeography = Map<string, Newtonsoft.Json.Linq.JToken>
+type EdmGeography = Map<string, System.Text.Json.JsonElement>
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
 type Type =
@@ -253,7 +253,7 @@ type Type =
         | Point -> "Point"
 
 type EdmGeographyPoint =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: Type
       coordinates: GeoJSONposition }
@@ -271,7 +271,7 @@ type EdmGeographyLineStringType =
         | LineString -> "LineString"
 
 type EdmGeographyLineString =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyLineStringType
       coordinates: list<GeoJSONposition> }
@@ -289,7 +289,7 @@ type EdmGeographyPolygonType =
         | Polygon -> "Polygon"
 
 type EdmGeographyPolygon =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyPolygonType
       coordinates: list<list<GeoJSONposition>> }
@@ -307,7 +307,7 @@ type EdmGeographyMultiPointType =
         | MultiPoint -> "MultiPoint"
 
 type EdmGeographyMultiPoint =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyMultiPointType
       coordinates: list<GeoJSONposition> }
@@ -325,7 +325,7 @@ type EdmGeographyMultiLineStringType =
         | MultiLineString -> "MultiLineString"
 
 type EdmGeographyMultiLineString =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyMultiLineStringType
       coordinates: list<list<GeoJSONposition>> }
@@ -343,7 +343,7 @@ type EdmGeographyMultiPolygonType =
         | MultiPolygon -> "MultiPolygon"
 
 type EdmGeographyMultiPolygon =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyMultiPolygonType
       coordinates: list<list<list<GeoJSONposition>>> }
@@ -361,7 +361,7 @@ type EdmGeographyCollectionType =
         | GeometryCollection -> "GeometryCollection"
 
 type EdmGeographyCollection =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeographyCollectionType
       coordinates: list<EdmGeometry> }
@@ -371,7 +371,7 @@ type EdmGeographyCollection =
           ``type`` = ``type``
           coordinates = coordinates }
 
-type EdmGeometry = Map<string, Newtonsoft.Json.Linq.JToken>
+type EdmGeometry = Map<string, System.Text.Json.JsonElement>
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
 type EdmGeometryPointType =
@@ -381,7 +381,7 @@ type EdmGeometryPointType =
         | Point -> "Point"
 
 type EdmGeometryPoint =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryPointType
       coordinates: GeoJSONposition }
@@ -399,7 +399,7 @@ type EdmGeometryLineStringType =
         | LineString -> "LineString"
 
 type EdmGeometryLineString =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryLineStringType
       coordinates: list<GeoJSONposition> }
@@ -417,7 +417,7 @@ type EdmGeometryPolygonType =
         | Polygon -> "Polygon"
 
 type EdmGeometryPolygon =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryPolygonType
       coordinates: list<list<GeoJSONposition>> }
@@ -435,7 +435,7 @@ type EdmGeometryMultiPointType =
         | MultiPoint -> "MultiPoint"
 
 type EdmGeometryMultiPoint =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryMultiPointType
       coordinates: list<GeoJSONposition> }
@@ -453,7 +453,7 @@ type EdmGeometryMultiLineStringType =
         | MultiLineString -> "MultiLineString"
 
 type EdmGeometryMultiLineString =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryMultiLineStringType
       coordinates: list<list<GeoJSONposition>> }
@@ -471,7 +471,7 @@ type EdmGeometryMultiPolygonType =
         | MultiPolygon -> "MultiPolygon"
 
 type EdmGeometryMultiPolygon =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryMultiPolygonType
       coordinates: list<list<list<GeoJSONposition>>> }
@@ -489,7 +489,7 @@ type EdmGeometryCollectionType =
         | GeometryCollection -> "GeometryCollection"
 
 type EdmGeometryCollection =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       ``type``: EdmGeometryCollectionType
       coordinates: list<EdmGeometry> }
@@ -500,7 +500,7 @@ type EdmGeometryCollection =
           coordinates = coordinates }
 
 type odataerror =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       error: odataerrormain }
     ///Creates an instance of odataerror with all optional fields initialized to None. The required fields are parameters of this function
@@ -509,14 +509,14 @@ type odataerror =
           error = error }
 
 type odataerrormain =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       code: string
       message: string
       target: Option<string>
       details: Option<list<odataerrordetail>>
       ///The structure of this object is service-specific
-      innererror: Option<Newtonsoft.Json.Linq.JObject> }
+      innererror: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of odataerrormain with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (code: string, message: string): odataerrormain =
         { ODataTypeName = Some "#odata.error.main"
@@ -527,7 +527,7 @@ type odataerrormain =
           innererror = None }
 
 type odataerrordetail =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       code: string
       message: string
@@ -540,7 +540,7 @@ type odataerrordetail =
           target = None }
 
 type AirlinesAirlineListAirline_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinAirline>> }
 
@@ -580,7 +580,7 @@ type AirlinesAirlineDeleteAirline =
     | DefaultResponse of payload: odataerror
 
 type AirportsAirportListAirport_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinAirport>> }
 
@@ -627,7 +627,7 @@ type MePersonUpdatePerson =
     | DefaultResponse of payload: odataerror
 
 type MeListFriends_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPerson>> }
 
@@ -639,7 +639,7 @@ type MeListFriends =
     | DefaultResponse of payload: odataerror
 
 type MeListRefFriends_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<string>> }
 
@@ -653,7 +653,7 @@ type MeListRefFriends =
 [<RequireQualifiedAccess>]
 type MeCreateRefFriends =
     ///Created navigation property link.
-    | Created of payload: Newtonsoft.Json.Linq.JToken
+    | Created of payload: System.Text.Json.JsonElement
     ///error
     | DefaultResponse of payload: odataerror
 
@@ -713,7 +713,7 @@ type MeDeleteRefPhoto =
     | DefaultResponse of payload: odataerror
 
 type MeListTrips_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinTrip>> }
 
@@ -760,7 +760,7 @@ type MeTripsTripGetInvolvedPeople =
     | DefaultResponse of payload: odataerror
 
 type MeTripsListPhotos_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPhoto>> }
 
@@ -772,7 +772,7 @@ type MeTripsListPhotos =
     | DefaultResponse of payload: odataerror
 
 type MeTripsListRefPhotos_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<string>> }
 
@@ -786,12 +786,12 @@ type MeTripsListRefPhotos =
 [<RequireQualifiedAccess>]
 type MeTripsCreateRefPhotos =
     ///Created navigation property link.
-    | Created of payload: Newtonsoft.Json.Linq.JToken
+    | Created of payload: System.Text.Json.JsonElement
     ///error
     | DefaultResponse of payload: odataerror
 
 type MeTripsListPlanItems_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPlanItem>> }
 
@@ -831,7 +831,7 @@ type MeTripsDeletePlanItems =
     | DefaultResponse of payload: odataerror
 
 type PeoplePersonListPerson_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPerson>> }
 
@@ -871,7 +871,7 @@ type PeoplePersonDeletePerson =
     | DefaultResponse of payload: odataerror
 
 type PeopleListFriends_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPerson>> }
 
@@ -917,7 +917,7 @@ type PeoplePersonTripsTripGetInvolvedPeople =
     | DefaultResponse of payload: odataerror
 
 type PhotosPhotoListPhoto_OK =
-    { [<Newtonsoft.Json.JsonProperty "@odata.type">]
+    { [<System.Text.Json.Serialization.JsonPropertyName "@odata.type">]
       ODataTypeName: Option<string>
       value: Option<list<MicrosoftODataSampleServiceModelsTripPinPhoto>> }
 

@@ -8,7 +8,7 @@ open SyncPetStore.Types
 open SyncPetStore.Http
 
 ///This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
-///Swagger at [http://swagger.io](http://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
+///Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
 ///You can now help us improve the API whether it's by making changes to the definition itself or to the code.
 ///That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
 ///Some useful links:
@@ -16,7 +16,7 @@ open SyncPetStore.Http
 ///- [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
 type SyncPetStoreClient(httpClient: HttpClient) =
     ///<summary>
-    ///Update an existing pet by Id
+    ///Update an existing pet by Id.
     ///</summary>
     member this.UpdatePet(body: Pet, ?cancellationToken: CancellationToken) =
         let requestParts = [ RequestPart.jsonContent body ]
@@ -28,10 +28,11 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         | 200 -> UpdatePet.OK(Serializer.deserialize content)
         | 400 -> UpdatePet.BadRequest
         | 404 -> UpdatePet.NotFound
-        | _ -> UpdatePet.MethodNotAllowed
+        | 422 -> UpdatePet.UnprocessableEntity
+        | _ -> UpdatePet.DefaultResponse
 
     ///<summary>
-    ///Add a new pet to the store
+    ///Add a new pet to the store.
     ///</summary>
     member this.AddPet(body: Pet, ?cancellationToken: CancellationToken) =
         let requestParts = [ RequestPart.jsonContent body ]
@@ -41,44 +42,44 @@ type SyncPetStoreClient(httpClient: HttpClient) =
 
         match int status with
         | 200 -> AddPet.OK(Serializer.deserialize content)
-        | _ -> AddPet.MethodNotAllowed
+        | 400 -> AddPet.BadRequest
+        | 422 -> AddPet.UnprocessableEntity
+        | _ -> AddPet.DefaultResponse
 
     ///<summary>
-    ///Multiple status values can be provided with comma separated strings
+    ///Multiple status values can be provided with comma separated strings.
     ///</summary>
     ///<param name="status">Status values that need to be considered for filter</param>
     ///<param name="cancellationToken"></param>
-    member this.FindPetsByStatus(?status: string, ?cancellationToken: CancellationToken) =
-        let requestParts =
-            [ if status.IsSome then
-                  RequestPart.query ("status", status.Value) ]
+    member this.FindPetsByStatus(status: string, ?cancellationToken: CancellationToken) =
+        let requestParts = [ RequestPart.query ("status", status) ]
 
         let (status, content) =
             OpenApiHttp.get httpClient "/pet/findByStatus" requestParts cancellationToken
 
         match int status with
         | 200 -> FindPetsByStatus.OK(Serializer.deserialize content)
-        | _ -> FindPetsByStatus.BadRequest
+        | 400 -> FindPetsByStatus.BadRequest
+        | _ -> FindPetsByStatus.DefaultResponse
 
     ///<summary>
     ///Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
     ///</summary>
     ///<param name="tags">Tags to filter by</param>
     ///<param name="cancellationToken"></param>
-    member this.FindPetsByTags(?tags: list<string>, ?cancellationToken: CancellationToken) =
-        let requestParts =
-            [ if tags.IsSome then
-                  RequestPart.query ("tags", tags.Value) ]
+    member this.FindPetsByTags(tags: list<string>, ?cancellationToken: CancellationToken) =
+        let requestParts = [ RequestPart.query ("tags", tags) ]
 
         let (status, content) =
             OpenApiHttp.get httpClient "/pet/findByTags" requestParts cancellationToken
 
         match int status with
         | 200 -> FindPetsByTags.OK(Serializer.deserialize content)
-        | _ -> FindPetsByTags.BadRequest
+        | 400 -> FindPetsByTags.BadRequest
+        | _ -> FindPetsByTags.DefaultResponse
 
     ///<summary>
-    ///Returns a single pet
+    ///Returns a single pet.
     ///</summary>
     ///<param name="petId">ID of pet to return</param>
     ///<param name="cancellationToken"></param>
@@ -91,10 +92,11 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         match int status with
         | 200 -> GetPetById.OK(Serializer.deserialize content)
         | 400 -> GetPetById.BadRequest
-        | _ -> GetPetById.NotFound
+        | 404 -> GetPetById.NotFound
+        | _ -> GetPetById.DefaultResponse
 
     ///<summary>
-    ///Updates a pet in the store with form data
+    ///Updates a pet resource based on the form data.
     ///</summary>
     ///<param name="petId">ID of pet that needs to be updated</param>
     ///<param name="name">Name of pet that needs to be updated</param>
@@ -112,11 +114,12 @@ type SyncPetStoreClient(httpClient: HttpClient) =
             OpenApiHttp.post httpClient "/pet/{petId}" requestParts cancellationToken
 
         match int status with
-        | 405 -> UpdatePetWithForm.MethodNotAllowed
+        | 200 -> UpdatePetWithForm.OK(Serializer.deserialize content)
+        | 400 -> UpdatePetWithForm.BadRequest
         | _ -> UpdatePetWithForm.DefaultResponse
 
     ///<summary>
-    ///Deletes a pet
+    ///Delete a pet.
     ///</summary>
     ///<param name="petId">Pet id to delete</param>
     ///<param name="apiKey"></param>
@@ -131,11 +134,12 @@ type SyncPetStoreClient(httpClient: HttpClient) =
             OpenApiHttp.delete httpClient "/pet/{petId}" requestParts cancellationToken
 
         match int status with
+        | 200 -> DeletePet.OK
         | 400 -> DeletePet.BadRequest
         | _ -> DeletePet.DefaultResponse
 
     ///<summary>
-    ///uploads an image
+    ///Upload image of the pet.
     ///</summary>
     ///<param name="petId">ID of pet to update</param>
     ///<param name="additionalMetadata">Additional Metadata</param>
@@ -158,10 +162,14 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         let (status, content) =
             OpenApiHttp.post httpClient "/pet/{petId}/uploadImage" requestParts cancellationToken
 
-        UploadFile.OK(Serializer.deserialize content)
+        match int status with
+        | 200 -> UploadFile.OK(Serializer.deserialize content)
+        | 400 -> UploadFile.BadRequest
+        | 404 -> UploadFile.NotFound
+        | _ -> UploadFile.DefaultResponse
 
     ///<summary>
-    ///Returns a map of status codes to quantities
+    ///Returns a map of status codes to quantities.
     ///</summary>
     member this.GetInventory(?cancellationToken: CancellationToken) =
         let requestParts = []
@@ -169,20 +177,26 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         let (status, content) =
             OpenApiHttp.get httpClient "/store/inventory" requestParts cancellationToken
 
-        GetInventory.OK(Serializer.deserialize content)
+        match int status with
+        | 200 -> GetInventory.OK(Serializer.deserialize content)
+        | _ -> GetInventory.DefaultResponse
 
     ///<summary>
-    ///Place a new order in the store
+    ///Place a new order in the store.
     ///</summary>
-    member this.PlaceOrder(body: Order, ?cancellationToken: CancellationToken) =
-        let requestParts = [ RequestPart.jsonContent body ]
+    member this.PlaceOrder(?cancellationToken: CancellationToken, ?body: Order) =
+        let requestParts =
+            [ if body.IsSome then
+                  RequestPart.jsonContent body.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/store/order" requestParts cancellationToken
 
         match int status with
         | 200 -> PlaceOrder.OK(Serializer.deserialize content)
-        | _ -> PlaceOrder.MethodNotAllowed
+        | 400 -> PlaceOrder.BadRequest
+        | 422 -> PlaceOrder.UnprocessableEntity
+        | _ -> PlaceOrder.DefaultResponse
 
     ///<summary>
     ///For valid response try integer IDs with value &amp;lt;= 5 or &amp;gt; 10. Other values will generate exceptions.
@@ -199,10 +213,11 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         match int status with
         | 200 -> GetOrderById.OK(Serializer.deserialize content)
         | 400 -> GetOrderById.BadRequest
-        | _ -> GetOrderById.NotFound
+        | 404 -> GetOrderById.NotFound
+        | _ -> GetOrderById.DefaultResponse
 
     ///<summary>
-    ///For valid response try integer IDs with value &amp;lt; 1000. Anything above 1000 or nonintegers will generate API errors
+    ///For valid response try integer IDs with value &amp;lt; 1000. Anything above 1000 or non-integers will generate API errors.
     ///</summary>
     ///<param name="orderId">ID of the order that needs to be deleted</param>
     ///<param name="cancellationToken"></param>
@@ -214,6 +229,7 @@ type SyncPetStoreClient(httpClient: HttpClient) =
             OpenApiHttp.delete httpClient "/store/order/{orderId}" requestParts cancellationToken
 
         match int status with
+        | 200 -> DeleteOrder.OK
         | 400 -> DeleteOrder.BadRequest
         | 404 -> DeleteOrder.NotFound
         | _ -> DeleteOrder.DefaultResponse
@@ -221,19 +237,29 @@ type SyncPetStoreClient(httpClient: HttpClient) =
     ///<summary>
     ///This can only be done by the logged in user.
     ///</summary>
-    member this.CreateUser(body: User, ?cancellationToken: CancellationToken) =
-        let requestParts = [ RequestPart.jsonContent body ]
+    member this.CreateUser(?cancellationToken: CancellationToken, ?body: User) =
+        let requestParts =
+            [ if body.IsSome then
+                  RequestPart.jsonContent body.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/user" requestParts cancellationToken
 
-        CreateUser.DefaultResponse(Serializer.deserialize content)
+        match int status with
+        | 200 -> CreateUser.OK(Serializer.deserialize content)
+        | _ -> CreateUser.DefaultResponse
 
     ///<summary>
-    ///Creates list of users with given input array
+    ///Creates list of users with given input array.
     ///</summary>
-    member this.CreateUsersWithListInput(body: CreateUsersWithListInputPayload, ?cancellationToken: CancellationToken) =
-        let requestParts = [ RequestPart.jsonContent body ]
+    member this.CreateUsersWithListInput
+        (
+            ?cancellationToken: CancellationToken,
+            ?body: CreateUsersWithListInputPayload
+        ) =
+        let requestParts =
+            [ if body.IsSome then
+                  RequestPart.jsonContent body.Value ]
 
         let (status, content) =
             OpenApiHttp.post httpClient "/user/createWithList" requestParts cancellationToken
@@ -243,7 +269,7 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         | _ -> CreateUsersWithListInput.DefaultResponse
 
     ///<summary>
-    ///Logs user into the system
+    ///Log into the system.
     ///</summary>
     ///<param name="username">The user name for login</param>
     ///<param name="password">The password for login in clear text</param>
@@ -260,10 +286,11 @@ type SyncPetStoreClient(httpClient: HttpClient) =
 
         match int status with
         | 200 -> LoginUser.OK content
-        | _ -> LoginUser.BadRequest
+        | 400 -> LoginUser.BadRequest
+        | _ -> LoginUser.DefaultResponse
 
     ///<summary>
-    ///Logs out current logged in user session
+    ///Log user out of the system.
     ///</summary>
     member this.LogoutUser(?cancellationToken: CancellationToken) =
         let requestParts = []
@@ -271,12 +298,14 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         let (status, content) =
             OpenApiHttp.get httpClient "/user/logout" requestParts cancellationToken
 
-        LogoutUser.DefaultResponse
+        match int status with
+        | 200 -> LogoutUser.OK
+        | _ -> LogoutUser.DefaultResponse
 
     ///<summary>
-    ///Get user by user name
+    ///Get user detail based on username.
     ///</summary>
-    ///<param name="username">The name that needs to be fetched. Use user1 for testing. </param>
+    ///<param name="username">The name that needs to be fetched. Use user1 for testing</param>
     ///<param name="cancellationToken"></param>
     member this.GetUserByName(username: string, ?cancellationToken: CancellationToken) =
         let requestParts =
@@ -288,23 +317,29 @@ type SyncPetStoreClient(httpClient: HttpClient) =
         match int status with
         | 200 -> GetUserByName.OK(Serializer.deserialize content)
         | 400 -> GetUserByName.BadRequest
-        | _ -> GetUserByName.NotFound
+        | 404 -> GetUserByName.NotFound
+        | _ -> GetUserByName.DefaultResponse
 
     ///<summary>
     ///This can only be done by the logged in user.
     ///</summary>
     ///<param name="username">name that need to be deleted</param>
-    ///<param name="body"></param>
     ///<param name="cancellationToken"></param>
-    member this.UpdateUser(username: string, body: User, ?cancellationToken: CancellationToken) =
+    ///<param name="body"></param>
+    member this.UpdateUser(username: string, ?cancellationToken: CancellationToken, ?body: User) =
         let requestParts =
             [ RequestPart.path ("username", username)
-              RequestPart.jsonContent body ]
+              if body.IsSome then
+                  RequestPart.jsonContent body.Value ]
 
         let (status, content) =
             OpenApiHttp.put httpClient "/user/{username}" requestParts cancellationToken
 
-        UpdateUser.DefaultResponse
+        match int status with
+        | 200 -> UpdateUser.OK
+        | 400 -> UpdateUser.BadRequest
+        | 404 -> UpdateUser.NotFound
+        | _ -> UpdateUser.DefaultResponse
 
     ///<summary>
     ///This can only be done by the logged in user.
@@ -319,6 +354,7 @@ type SyncPetStoreClient(httpClient: HttpClient) =
             OpenApiHttp.delete httpClient "/user/{username}" requestParts cancellationToken
 
         match int status with
+        | 200 -> DeleteUser.OK
         | 400 -> DeleteUser.BadRequest
         | 404 -> DeleteUser.NotFound
         | _ -> DeleteUser.DefaultResponse

@@ -84,9 +84,9 @@ type SynType with
         )
 
     static member ByteArray() = SynType.Array(1, SynType.Byte(), range0)
-    static member JToken() = SynType.CreateLongIdent "Newtonsoft.Json.Linq.JToken"
-    static member JObject() = SynType.CreateLongIdent "Newtonsoft.Json.Linq.JObject"
-    static member JArray() = SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray"
+    static member JToken() = SynType.CreateLongIdent "System.Text.Json.JsonElement"
+    static member JObject() = SynType.CreateLongIdent "System.Text.Json.JsonElement"
+    static member JArray() = SynType.CreateLongIdent "System.Text.Json.JsonElement"
     static member Object() = SynType.Create "obj"
 
 open System

@@ -13,18 +13,19 @@ type FableNSwagClient(url: string, headers: list<Header>) =
     ///Uploads an image property of a branding.
     ///</summary>
     ///<param name="brandingId">The ID of the branding to upload an image for</param>
-    ///<param name="body"></param>
     ///<param name="property">Specifies which image property to upload to. Can be either "logo", "favicon" or "feature_image"</param>
     ///<param name="authorization">An authorization header with a bearer token of a SuperAdmin user.</param>
-    member this.UploadBrandingImage(brandingId: int, body: File, ?property: string, ?authorization: string) =
+    ///<param name="body"></param>
+    member this.UploadBrandingImage(brandingId: int, ?property: string, ?authorization: string, ?body: File) =
         async {
             let requestParts =
                 [ RequestPart.query ("brandingId", brandingId)
-                  RequestPart.multipartFormData ("body", body)
                   if property.IsSome then
                       RequestPart.query ("property", property.Value)
                   if authorization.IsSome then
-                      RequestPart.header ("authorization", authorization.Value) ]
+                      RequestPart.header ("authorization", authorization.Value)
+                  if body.IsSome then
+                      RequestPart.multipartFormData ("body", body.Value) ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/api/Brandings/upload" headers requestParts
 

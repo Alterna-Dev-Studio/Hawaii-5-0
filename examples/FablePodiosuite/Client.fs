@@ -61,11 +61,12 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Revokes the active session for the user by disabling the token. This disables the different sessions opened on differents computers and browsers.&amp;lt;br /&amp;gt; The user will login again to use the App, and a new token will be generate.
     ///</summary>
-    member this.PostAuthRevokeToken(xAccessToken: string, payload: PostAuthRevokeTokenPayload) =
+    member this.PostAuthRevokeToken(xAccessToken: string, ?payload: PostAuthRevokeTokenPayload) =
         async {
             let requestParts =
                 [ RequestPart.header ("x-access-token", xAccessToken)
-                  RequestPart.jsonContent payload ]
+                  if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/auth/revoke-token" headers requestParts
 
@@ -97,11 +98,12 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Creates a new user taking token and new user data. Returns the new user data. An email is sent to the new user with instructions to log in.
     ///</summary>
-    member this.PostUsers(xAccessToken: string, payload: PostUsersPayload) =
+    member this.PostUsers(xAccessToken: string, ?payload: PostUsersPayload) =
         async {
             let requestParts =
                 [ RequestPart.header ("x-access-token", xAccessToken)
-                  RequestPart.jsonContent payload ]
+                  if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/users" headers requestParts
 
@@ -1281,9 +1283,12 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Assets card Info (bulk)
     ///</summary>
-    member this.PostAssetsbulk(payload: PostAssetsbulkPayload) =
+    member this.PostAssetsbulk(?payload: PostAssetsbulkPayload) =
         async {
-            let requestParts = [ RequestPart.jsonContent payload ]
+            let requestParts =
+                [ if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/assetsbulk" headers requestParts
 
             match int status with
@@ -3021,9 +3026,12 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Add a short dial entry
     ///</summary>
-    member this.PostAssetsQuickDialByIccid(payload: PostAssetsQuickDialByIccidPayload) =
+    member this.PostAssetsQuickDialByIccid(?payload: PostAssetsQuickDialByIccidPayload) =
         async {
-            let requestParts = [ RequestPart.jsonContent payload ]
+            let requestParts =
+                [ if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/assets/{iccid}/quick-dial" headers requestParts
 
             match int status with
@@ -3068,9 +3076,11 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Update a short dial entry
     ///</summary>
-    member this.PutAssetsQuickDialByIccidAndLocation(payload: PutAssetsQuickDialByIccidAndLocationPayload) =
+    member this.PutAssetsQuickDialByIccidAndLocation(?payload: PutAssetsQuickDialByIccidAndLocationPayload) =
         async {
-            let requestParts = [ RequestPart.jsonContent payload ]
+            let requestParts =
+                [ if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
 
             let! (status, content) =
                 OpenApiHttp.putAsync url "/assets/{iccid}/quick-dial/{location}" headers requestParts
@@ -3102,9 +3112,12 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Forces to make a MT voice call to a SIM. This function is used to make the client perform a task when it gets a call.
     ///</summary>
-    member this.PostAssetsDialByIccid(payload: PostAssetsDialByIccidPayload) =
+    member this.PostAssetsDialByIccid(?payload: PostAssetsDialByIccidPayload) =
         async {
-            let requestParts = [ RequestPart.jsonContent payload ]
+            let requestParts =
+                [ if payload.IsSome then
+                      RequestPart.jsonContent payload.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/assets/{iccid}/dial" headers requestParts
 
             match int status with

@@ -217,7 +217,7 @@ type GraphsLine =
 
 type GraphsPie =
     { total: Option<string>
-      element: Option<list<Newtonsoft.Json.Linq.JToken>> }
+      element: Option<list<System.Text.Json.JsonElement>> }
     ///Creates an instance of GraphsPie with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): GraphsPie = { total = None; element = None }
 
@@ -376,7 +376,7 @@ type Account =
       ``type``: Option<Type>
       billing: Option<BalanceAndType>
       setup: Option<string>
-      dashboardWidgets: Option<Newtonsoft.Json.Linq.JObject>
+      dashboardWidgets: Option<System.Text.Json.JsonElement>
       branding: Option<Branding>
       theme: Option<string>
       operations: Option<Operations>
@@ -669,7 +669,7 @@ type SmsAlerts =
           limit = None
           enabled = None }
 
-type SetupsTags = Map<string, Newtonsoft.Json.Linq.JToken>
+type SetupsTags = Map<string, System.Text.Json.JsonElement>
 
 type Setups =
     { accountId: Option<string>
@@ -837,7 +837,7 @@ type Events =
       eid: Option<string>
       action: Option<string>
       result: Option<string>
-      raw: Option<Newtonsoft.Json.Linq.JObject>
+      raw: Option<System.Text.Json.JsonElement>
       created: Option<System.DateTimeOffset>
       modified: Option<System.DateTimeOffset> }
     ///Creates an instance of Events with all optional fields initialized to None. The required fields are parameters of this function
@@ -1620,8 +1620,8 @@ type campaign =
       scheduled: Option<string>
       startTime: Option<string>
       endTime: Option<string>
-      filters: Option<Newtonsoft.Json.Linq.JObject>
-      campaignReferences: Option<Newtonsoft.Json.Linq.JObject>
+      filters: Option<System.Text.Json.JsonElement>
+      campaignReferences: Option<System.Text.Json.JsonElement>
       ``process``: Option<Process>
       steeringList: Option<string>
       downloadProfile: Option<campaingDownloadProfile>
@@ -1995,7 +1995,7 @@ type PutUsersFavoritesByUserId =
 
 type PutUsersCustomizationByUserIdPayload =
     { accountId: string
-      customization: Option<Newtonsoft.Json.Linq.JObject> }
+      customization: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PutUsersCustomizationByUserIdPayload with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (accountId: string): PutUsersCustomizationByUserIdPayload =
         { accountId = accountId
@@ -2037,7 +2037,7 @@ type PutUsersPermissionsByUserId =
 [<RequireQualifiedAccess>]
 type GetAccountsNotifications =
     ///Returns an array of notifications
-    | OK of payload: Newtonsoft.Json.Linq.JArray
+    | OK of payload: System.Text.Json.JsonElement
     ///Bad request.
     | BadRequest of payload: BadRequest
     ///Unauthorized.
@@ -2228,7 +2228,7 @@ type PutAccountsByAccountIdPayload =
       ``type``: Option<PutAccountsByAccountIdPayloadType>
       name: Option<string>
       legalName: Option<string>
-      addresses: Option<list<Newtonsoft.Json.Linq.JToken>> }
+      addresses: Option<list<System.Text.Json.JsonElement>> }
     ///Creates an instance of PutAccountsByAccountIdPayload with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PutAccountsByAccountIdPayload =
         { defaultEmail = None
@@ -2354,7 +2354,7 @@ type GetAccountsRolesActionsByAccountIdAndRolename =
 [<RequireQualifiedAccess>]
 type GetAccountsNotificationsByAccountId =
     ///Returns an array of notifications
-    | OK of payload: Newtonsoft.Json.Linq.JArray
+    | OK of payload: System.Text.Json.JsonElement
     ///Bad request.
     | BadRequest of payload: BadRequest
     ///Unauthorized.
@@ -2590,7 +2590,7 @@ type PostWebhookPayload =
     { accountId: Option<string>
       ``type``: Option<PostWebhookPayloadType>
       ///payload
-      data: Option<Newtonsoft.Json.Linq.JObject> }
+      data: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PostWebhookPayload with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PostWebhookPayload =
         { accountId = None
@@ -2828,14 +2828,14 @@ type PostAssetsPayloadProfileState =
 type PostAssetsPayload =
     { accountId: string
       iccid: string
-      carriers: Newtonsoft.Json.Linq.JObject
+      carriers: System.Text.Json.JsonElement
       name: Option<string>
       ``type``: Option<PostAssetsPayloadType>
       model: Option<string>
       profileState: Option<PostAssetsPayloadProfileState>
       bootstrapEid: Option<string> }
     ///Creates an instance of PostAssetsPayload with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (accountId: string, iccid: string, carriers: Newtonsoft.Json.Linq.JObject): PostAssetsPayload =
+    static member Create (accountId: string, iccid: string, carriers: System.Text.Json.JsonElement): PostAssetsPayload =
         { accountId = accountId
           iccid = iccid
           carriers = carriers
@@ -3291,7 +3291,7 @@ type AppsCompatibility =
 type GetAssetsDiagnosticByIccid_OK =
     { result: Option<string>
       description: Option<string>
-      notice: Option<Newtonsoft.Json.Linq.JToken>
+      notice: Option<System.Text.Json.JsonElement>
       provisioning: Option<Provisioning>
       network: Option<Network>
       data: Option<GetAssetsDiagnosticByIccid_OKData>
@@ -3452,7 +3452,7 @@ type GetZonesSchemes =
 [<RequireQualifiedAccess>]
 type GetZonesSchemesByZoneSchemeId =
     ///A list of accounts
-    | OK of payload: Newtonsoft.Json.Linq.JArray
+    | OK of payload: System.Text.Json.JsonElement
 
 type PostBulkAssetsSubscribePayloadDataSubscriptionIpPools =
     { carrier: Option<string>
@@ -4667,7 +4667,7 @@ type PostCampaignsCompletionForecast_OK =
     { complete: Option<float>
       total: Option<float>
       minutes: Option<float>
-      errors: Option<Newtonsoft.Json.Linq.JObject> }
+      errors: Option<System.Text.Json.JsonElement> }
 
 [<RequireQualifiedAccess>]
 type PostCampaignsCompletionForecast =

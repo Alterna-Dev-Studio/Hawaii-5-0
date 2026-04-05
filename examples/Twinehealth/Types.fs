@@ -19,7 +19,7 @@ type Validations =
     static member Create (): Validations = { maximum = None; minimum = None }
 
 type ActionMetric =
-    { goal: Option<Newtonsoft.Json.Linq.JObject>
+    { goal: Option<System.Text.Json.JsonElement>
       metric_type: Option<string>
       unit: Option<string>
       validations: Option<Validations> }
@@ -76,12 +76,12 @@ type Type =
 type Attributes =
     { _thread: Option<string>
       adherence: Option<Adherence>
-      details: Option<Newtonsoft.Json.Linq.JObject>
+      details: Option<System.Text.Json.JsonElement>
       effective_from: string
       effective_to: Option<string>
       frequency_goal: Option<Frequencygoal>
       identifiers: Option<list<Identifier>>
-      intake: Option<Newtonsoft.Json.Linq.JObject>
+      intake: Option<System.Text.Json.JsonElement>
       metric_required: Option<bool>
       metrics: Option<list<ActionMetric>>
       static_title: Option<string>
@@ -115,7 +115,7 @@ type Data =
 
 type Plan =
     { data: Option<Data>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Plan with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Plan = { data = None; links = None }
 
@@ -202,7 +202,7 @@ type ActionsData =
 
 type Actions =
     { data: Option<ActionsData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Actions with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Actions = { data = None; links = None }
 
@@ -214,7 +214,7 @@ type BundleResourceRelationshipsPlanData =
 
 type BundleResourceRelationshipsPlan =
     { data: Option<BundleResourceRelationshipsPlanData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of BundleResourceRelationshipsPlan with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): BundleResourceRelationshipsPlan = { data = None; links = None }
 
@@ -279,7 +279,7 @@ type CalendarEventResourceAttributes =
       ///The date and time when the calendar event is marked as completed. Only valid for `plan-check-in` event type.
       completed_at: Option<string>
       ///The coach who marked the calendar event as completed. Only valid for `plan-check-in` event type.
-      completed_by: Option<Newtonsoft.Json.Linq.JObject>
+      completed_by: Option<System.Text.Json.JsonElement>
       description: Option<string>
       ///The date and time when the calendar event ends. Not valid for `plan-check-in` event type.
       end_at: Option<string>
@@ -369,7 +369,7 @@ type CalendarEventResponseResourceAttributesResponsestatus =
 
 type CalendarEventResponseResourceAttributes =
     { ///The attendee in the attendees list of the calendar event.
-      attendee: Option<Newtonsoft.Json.Linq.JObject>
+      attendee: Option<System.Text.Json.JsonElement>
       ///The response status for the attendee.
       response_status: Option<CalendarEventResponseResourceAttributesResponsestatus> }
     ///Creates an instance of CalendarEventResponseResourceAttributes with all optional fields initialized to None. The required fields are parameters of this function
@@ -511,7 +511,7 @@ type CreateBundleResponse =
     ///Creates an instance of CreateBundleResponse with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (data: BundleResource): CreateBundleResponse = { data = data; meta = None }
 
-type CreateCalendarEventRequestDataRelationshipsOwner = Map<string, Newtonsoft.Json.Linq.JToken>
+type CreateCalendarEventRequestDataRelationshipsOwner = Map<string, System.Text.Json.JsonElement>
 
 type CreateCalendarEventRequestDataRelationships =
     { owner: Option<CreateCalendarEventRequestDataRelationshipsOwner> }
@@ -519,10 +519,10 @@ type CreateCalendarEventRequestDataRelationships =
     static member Create (): CreateCalendarEventRequestDataRelationships = { owner = None }
 
 type CreateCalendarEventRequestData =
-    { attributes: Newtonsoft.Json.Linq.JToken
+    { attributes: System.Text.Json.JsonElement
       relationships: CreateCalendarEventRequestDataRelationships }
     ///Creates an instance of CreateCalendarEventRequestData with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (attributes: Newtonsoft.Json.Linq.JToken,
+    static member Create (attributes: System.Text.Json.JsonElement,
                           relationships: CreateCalendarEventRequestDataRelationships): CreateCalendarEventRequestData =
         { attributes = attributes
           relationships = relationships }
@@ -538,8 +538,8 @@ type CreateCalendarEventResponse =
     ///Creates an instance of CreateCalendarEventResponse with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): CreateCalendarEventResponse = { data = None; meta = None }
 
-type CreateCalendarEventResponseRequestDataRelationshipsCalendarevent = Map<string, Newtonsoft.Json.Linq.JToken>
-type CreateCalendarEventResponseRequestDataRelationshipsUser = Map<string, Newtonsoft.Json.Linq.JToken>
+type CreateCalendarEventResponseRequestDataRelationshipsCalendarevent = Map<string, System.Text.Json.JsonElement>
+type CreateCalendarEventResponseRequestDataRelationshipsUser = Map<string, System.Text.Json.JsonElement>
 
 type CreateCalendarEventResponseRequestDataRelationships =
     { calendar_event: Option<CreateCalendarEventResponseRequestDataRelationshipsCalendarevent>
@@ -549,10 +549,10 @@ type CreateCalendarEventResponseRequestDataRelationships =
         { calendar_event = None; user = None }
 
 type CreateCalendarEventResponseRequestData =
-    { attributes: Newtonsoft.Json.Linq.JToken
+    { attributes: System.Text.Json.JsonElement
       relationships: CreateCalendarEventResponseRequestDataRelationships }
     ///Creates an instance of CreateCalendarEventResponseRequestData with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (attributes: Newtonsoft.Json.Linq.JToken,
+    static member Create (attributes: System.Text.Json.JsonElement,
                           relationships: CreateCalendarEventResponseRequestDataRelationships): CreateCalendarEventResponseRequestData =
         { attributes = attributes
           relationships = relationships }
@@ -1342,7 +1342,7 @@ type QuestiondefinitionData =
 
 type Questiondefinition =
     { data: Option<QuestiondefinitionData>
-      links: Option<Newtonsoft.Json.Linq.JToken> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Questiondefinition with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Questiondefinition = { data = None; links = None }
 
@@ -1358,7 +1358,7 @@ type HealthProfileQuestionResourceRelationships =
 
 type HealthProfileQuestionResource =
     { ///A health profile question does not have any attribute since it only relates an answer to the corresponding question definition.
-      attributes: Option<Newtonsoft.Json.Linq.JObject>
+      attributes: Option<System.Text.Json.JsonElement>
       id: string
       links: Option<HealthProfileQuestionResourceLinks>
       relationships: Option<HealthProfileQuestionResourceRelationships>
@@ -1533,7 +1533,7 @@ type HealthQuestionDefinitionResource =
     { attributes: Option<HealthQuestionDefinitionResourceAttributes>
       id: string
       links: Option<HealthQuestionDefinitionResourceLinks>
-      relationships: Option<Newtonsoft.Json.Linq.JObject>
+      relationships: Option<System.Text.Json.JsonElement>
       ``type``: string }
     ///Creates an instance of HealthQuestionDefinitionResource with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string, ``type``: string): HealthQuestionDefinitionResource =
@@ -1561,12 +1561,12 @@ type OrganizationResourceType =
         | Organization -> "organization"
 
 type OrganizationResource =
-    { attributes: Newtonsoft.Json.Linq.JToken
+    { attributes: System.Text.Json.JsonElement
       id: string
-      links: Option<Newtonsoft.Json.Linq.JToken>
+      links: Option<System.Text.Json.JsonElement>
       ``type``: OrganizationResourceType }
     ///Creates an instance of OrganizationResource with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (attributes: Newtonsoft.Json.Linq.JToken, id: string, ``type``: OrganizationResourceType): OrganizationResource =
+    static member Create (attributes: System.Text.Json.JsonElement, id: string, ``type``: OrganizationResourceType): OrganizationResource =
         { attributes = attributes
           id = id
           links = None
@@ -1642,10 +1642,10 @@ type PatientCreateResourceLinks =
     static member Create (): PatientCreateResourceLinks = { self = None; twine_web_app = None }
 
 type PatientCreateResourceRelationships =
-    { coaches: Option<Newtonsoft.Json.Linq.JToken>
-      groups: Newtonsoft.Json.Linq.JToken }
+    { coaches: Option<System.Text.Json.JsonElement>
+      groups: System.Text.Json.JsonElement }
     ///Creates an instance of PatientCreateResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (groups: Newtonsoft.Json.Linq.JToken): PatientCreateResourceRelationships =
+    static member Create (groups: System.Text.Json.JsonElement): PatientCreateResourceRelationships =
         { coaches = None; groups = groups }
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
@@ -1679,7 +1679,7 @@ type CoachesData =
 
 type Coaches =
     { data: list<CoachesData>
-      links: Option<Newtonsoft.Json.Linq.JToken> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Coaches with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (data: list<CoachesData>): Coaches = { data = data; links = None }
 
@@ -1851,7 +1851,7 @@ type PatientHealthMetricCreateResourceAttributes =
       ``type``: Option<PatientHealthMetricCreateResourceAttributesType>
       unit: Option<string>
       ///Can be any value (number, boolean, string, object) depending on the metric type. Most values are of type number.
-      value: Option<Newtonsoft.Json.Linq.JToken> }
+      value: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthMetricCreateResourceAttributes with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthMetricCreateResourceAttributes =
         { code = None
@@ -1901,7 +1901,7 @@ type PatientHealthMetricCreateResourceRelationshipsPatientData =
 
 type PatientHealthMetricCreateResourceRelationshipsPatient =
     { data: Option<PatientHealthMetricCreateResourceRelationshipsPatientData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthMetricCreateResourceRelationshipsPatient with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthMetricCreateResourceRelationshipsPatient = { data = None; links = None }
 
@@ -2026,7 +2026,7 @@ type PatientHealthMetricResourceAttributes =
       ``type``: Option<PatientHealthMetricResourceAttributesType>
       unit: Option<string>
       ///Can be any value (number, boolean, string, object) depending on the metric type. Most values are of type number.
-      value: Option<Newtonsoft.Json.Linq.JToken> }
+      value: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthMetricResourceAttributes with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthMetricResourceAttributes =
         { code = None
@@ -2077,7 +2077,7 @@ type PatientHealthMetricResourceRelationshipsPatientData =
 
 type PatientHealthMetricResourceRelationshipsPatient =
     { data: Option<PatientHealthMetricResourceRelationshipsPatientData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthMetricResourceRelationshipsPatient with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthMetricResourceRelationshipsPatient = { data = None; links = None }
 
@@ -2106,7 +2106,7 @@ type Annotations =
 
 type PatientHealthResultResourceAttributesData =
     { ///Can be any value (number, boolean, string, object) depending on the metric type. Most values are of type number
-      value: Option<Newtonsoft.Json.Linq.JToken> }
+      value: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthResultResourceAttributesData with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthResultResourceAttributesData = { value = None }
 
@@ -2201,7 +2201,7 @@ type Metrictype =
 
 type PatientHealthResultResourceAttributesSource =
     { ///Can be any value
-      metadata: Option<Newtonsoft.Json.Linq.JToken>
+      metadata: Option<System.Text.Json.JsonElement>
       name: Option<string>
       source_id: Option<string> }
     ///Creates an instance of PatientHealthResultResourceAttributesSource with all optional fields initialized to None. The required fields are parameters of this function
@@ -2250,7 +2250,7 @@ type ActionData =
 
 type Action =
     { data: Option<ActionData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Action with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Action = { data = None; links = None }
 
@@ -2262,7 +2262,7 @@ type MetricData =
 
 type Metric =
     { data: Option<MetricData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Metric with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Metric = { data = None; links = None }
 
@@ -2306,7 +2306,7 @@ type PatientHealthResultResourceRelationshipsPatientData =
 
 type PatientHealthResultResourceRelationshipsPatient =
     { data: Option<PatientHealthResultResourceRelationshipsPatientData>
-      links: Option<Newtonsoft.Json.Linq.JObject> }
+      links: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of PatientHealthResultResourceRelationshipsPatient with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientHealthResultResourceRelationshipsPatient = { data = None; links = None }
 
@@ -2364,8 +2364,8 @@ type Windoworder =
     static member Create (): Windoworder = { _actions = None; ``type`` = None }
 
 type PatientPlanSummaryResourceAttributes =
-    { adherence: Option<Newtonsoft.Json.Linq.JObject>
-      critical: Option<Newtonsoft.Json.Linq.JObject>
+    { adherence: Option<System.Text.Json.JsonElement>
+      critical: Option<System.Text.Json.JsonElement>
       effective_from: Option<string>
       time_zone: Option<string>
       window_notification_times: Option<Windownotificationtimes>
@@ -2558,10 +2558,10 @@ type PatientResourceLinks =
     static member Create (): PatientResourceLinks = { self = None; twine_web_app = None }
 
 type PatientResourceRelationships =
-    { coaches: Option<Newtonsoft.Json.Linq.JToken>
-      groups: Newtonsoft.Json.Linq.JToken }
+    { coaches: Option<System.Text.Json.JsonElement>
+      groups: System.Text.Json.JsonElement }
     ///Creates an instance of PatientResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (groups: Newtonsoft.Json.Linq.JToken): PatientResourceRelationships =
+    static member Create (groups: System.Text.Json.JsonElement): PatientResourceRelationships =
         { coaches = None; groups = groups }
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
@@ -2613,7 +2613,7 @@ type PhoneNumber =
           value = value }
 
 type Resource =
-    { attributes: Option<Newtonsoft.Json.Linq.JObject>
+    { attributes: Option<System.Text.Json.JsonElement>
       id: Option<string>
       ``type``: Option<string> }
     ///Creates an instance of Resource with all optional fields initialized to None. The required fields are parameters of this function
@@ -2996,8 +2996,8 @@ type RewardResource =
           ``type`` = ``type`` }
 
 type TokenResourceRelationships =
-    { groups: Option<Newtonsoft.Json.Linq.JToken>
-      organization: Option<Newtonsoft.Json.Linq.JToken> }
+    { groups: Option<System.Text.Json.JsonElement>
+      organization: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of TokenResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): TokenResourceRelationships = { groups = None; organization = None }
 
@@ -3009,7 +3009,7 @@ type TokenResourceType =
         | Token -> "token"
 
 type TokenResource =
-    { attributes: Option<Newtonsoft.Json.Linq.JToken>
+    { attributes: Option<System.Text.Json.JsonElement>
       id: string
       relationships: Option<TokenResourceRelationships>
       ``type``: TokenResourceType }
@@ -3042,7 +3042,7 @@ type UpdateBundleResponse =
     ///Creates an instance of UpdateBundleResponse with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (data: BundleResource): UpdateBundleResponse = { data = data; meta = None }
 
-type UpdateCalendarEventRequestDataRelationshipsOwner = Map<string, Newtonsoft.Json.Linq.JToken>
+type UpdateCalendarEventRequestDataRelationshipsOwner = Map<string, System.Text.Json.JsonElement>
 
 type UpdateCalendarEventRequestDataRelationships =
     { owner: Option<UpdateCalendarEventRequestDataRelationshipsOwner> }
@@ -3050,7 +3050,7 @@ type UpdateCalendarEventRequestDataRelationships =
     static member Create (): UpdateCalendarEventRequestDataRelationships = { owner = None }
 
 type UpdateCalendarEventRequestData =
-    { attributes: Option<Newtonsoft.Json.Linq.JToken>
+    { attributes: Option<System.Text.Json.JsonElement>
       relationships: Option<UpdateCalendarEventRequestDataRelationships> }
     ///Creates an instance of UpdateCalendarEventRequestData with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): UpdateCalendarEventRequestData =

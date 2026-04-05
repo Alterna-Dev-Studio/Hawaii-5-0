@@ -28,28 +28,6 @@ type Order =
           status = None
           complete = None }
 
-type Customer =
-    { id: Option<int64>
-      username: Option<string>
-      address: Option<list<Address>> }
-    ///Creates an instance of Customer with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (): Customer =
-        { id = None
-          username = None
-          address = None }
-
-type Address =
-    { street: Option<string>
-      city: Option<string>
-      state: Option<string>
-      zip: Option<string> }
-    ///Creates an instance of Address with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (): Address =
-        { street = None
-          city = None
-          state = None
-          zip = None }
-
 type Category =
     { id: Option<int64>
       name: Option<string> }
@@ -130,14 +108,20 @@ type UpdatePet =
     ///Pet not found
     | NotFound
     ///Validation exception
-    | MethodNotAllowed
+    | UnprocessableEntity
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type AddPet =
     ///Successful operation
     | OK of payload: Pet
     ///Invalid input
-    | MethodNotAllowed
+    | BadRequest
+    ///Validation exception
+    | UnprocessableEntity
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type FindPetsByStatus =
@@ -145,6 +129,8 @@ type FindPetsByStatus =
     | OK of payload: list<Pet>
     ///Invalid status value
     | BadRequest
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type FindPetsByTags =
@@ -152,6 +138,8 @@ type FindPetsByTags =
     | OK of payload: list<Pet>
     ///Invalid tag value
     | BadRequest
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type GetPetById =
@@ -161,35 +149,55 @@ type GetPetById =
     | BadRequest
     ///Pet not found
     | NotFound
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type UpdatePetWithForm =
+    ///successful operation
+    | OK of payload: Pet
     ///Invalid input
-    | MethodNotAllowed
+    | BadRequest
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type DeletePet =
+    ///Pet deleted
+    | OK
     ///Invalid pet value
     | BadRequest
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type UploadFile =
     ///successful operation
     | OK of payload: ApiResponse
+    ///No file uploaded
+    | BadRequest
+    ///Pet not found
+    | NotFound
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type GetInventory =
     ///successful operation
     | OK of payload: Map<string, int>
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type PlaceOrder =
     ///successful operation
     | OK of payload: Order
     ///Invalid input
-    | MethodNotAllowed
+    | BadRequest
+    ///Validation exception
+    | UnprocessableEntity
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type GetOrderById =
@@ -199,19 +207,26 @@ type GetOrderById =
     | BadRequest
     ///Order not found
     | NotFound
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type DeleteOrder =
+    ///order deleted
+    | OK
     ///Invalid ID supplied
     | BadRequest
     ///Order not found
     | NotFound
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type CreateUser =
     ///successful operation
-    | DefaultResponse of payload: User
+    | OK of payload: User
+    ///Unexpected error
+    | DefaultResponse
 
 type CreateUsersWithListInputPayloadArrayItem =
     { id: Option<int64>
@@ -240,7 +255,7 @@ type CreateUsersWithListInputPayload = list<CreateUsersWithListInputPayloadArray
 type CreateUsersWithListInput =
     ///Successful operation
     | OK of payload: User
-    ///successful operation
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
@@ -249,10 +264,14 @@ type LoginUser =
     | OK of payload: string
     ///Invalid username/password supplied
     | BadRequest
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type LogoutUser =
     ///successful operation
+    | OK
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
@@ -263,16 +282,27 @@ type GetUserByName =
     | BadRequest
     ///User not found
     | NotFound
+    ///Unexpected error
+    | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type UpdateUser =
     ///successful operation
+    | OK
+    ///bad request
+    | BadRequest
+    ///user not found
+    | NotFound
+    ///Unexpected error
     | DefaultResponse
 
 [<RequireQualifiedAccess>]
 type DeleteUser =
+    ///User deleted
+    | OK
     ///Invalid username supplied
     | BadRequest
     ///User not found
     | NotFound
+    ///Unexpected error
     | DefaultResponse

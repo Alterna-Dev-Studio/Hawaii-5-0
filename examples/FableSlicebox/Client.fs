@@ -303,10 +303,11 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new directory to watch for incoming DICOM files
     ///</summary>
-    member this.PostDirectorywatches(watchedDirectory: watchedDirectory) =
+    member this.PostDirectorywatches(?watchedDirectory: watchedDirectory) =
         async {
             let requestParts =
-                [ RequestPart.jsonContent watchedDirectory ]
+                [ if watchedDirectory.IsSome then
+                      RequestPart.jsonContent watchedDirectory.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/directorywatches" headers requestParts
             return PostDirectorywatches.Created(Serializer.deserialize content)
@@ -475,10 +476,11 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new forwarding rule
     ///</summary>
-    member this.PostForwardingRules(fowardingRule: forwardingrule) =
+    member this.PostForwardingRules(?fowardingRule: forwardingrule) =
         async {
             let requestParts =
-                [ RequestPart.jsonContent fowardingRule ]
+                [ if fowardingRule.IsSome then
+                      RequestPart.jsonContent fowardingRule.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/forwarding/rules" headers requestParts
             return PostForwardingRules.Created(Serializer.deserialize content)
@@ -487,9 +489,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a DICOM dataset to slicebox
     ///</summary>
-    member this.PostImages(body: string) =
+    member this.PostImages(?body: string) =
         async {
-            let requestParts = [ RequestPart.jsonContent body ]
+            let requestParts =
+                [ if body.IsSome then
+                      RequestPart.jsonContent body.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/images" headers requestParts
 
             match int status with
@@ -539,16 +544,15 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///add a JPEG image to slicebox. The image data will be wrapped in a DICOM file and added as a new series belonging to the study with the supplied ID
     ///</summary>
     ///<param name="studyid">ID of study to add new series to</param>
-    ///<param name="description">DICOM series description of the resulting secondary capture series</param>
     ///<param name="requestBody"></param>
-    member this.PostImagesJpeg(studyid: int64, ?description: string, ?requestBody: byte []) =
+    ///<param name="description">DICOM series description of the resulting secondary capture series</param>
+    member this.PostImagesJpeg(studyid: int64, requestBody: byte [], ?description: string) =
         async {
             let requestParts =
                 [ RequestPart.query ("studyid", studyid)
+                  RequestPart.binaryContent requestBody
                   if description.IsSome then
-                      RequestPart.query ("description", description.Value)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                      RequestPart.query ("description", description.Value) ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/images/jpeg" headers requestParts
             return PostImagesJpeg.Created(Serializer.deserialize content)
@@ -759,11 +763,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///</summary>
     ///<param name="id">ID of session</param>
     ///<param name="body"></param>
-    member this.PostImportSessionsImagesById(id: int64, body: string) =
+    member this.PostImportSessionsImagesById(id: int64, ?body: string) =
         async {
             let requestParts =
                 [ RequestPart.path ("id", id)
-                  RequestPart.jsonContent body ]
+                  if body.IsSome then
+                      RequestPart.jsonContent body.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/import/sessions/{id}/images" headers requestParts
 
@@ -1326,9 +1331,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new SCP for receiving DICOM images
     ///</summary>
-    member this.PostScps(scp: scp) =
+    member this.PostScps(?scp: scp) =
         async {
-            let requestParts = [ RequestPart.jsonContent scp ]
+            let requestParts =
+                [ if scp.IsSome then
+                      RequestPart.jsonContent scp.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/scps" headers requestParts
 
             match int status with
@@ -1367,9 +1375,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new SCU for sending DICOM images
     ///</summary>
-    member this.PostScus(scu: scu) =
+    member this.PostScus(?scu: scu) =
         async {
-            let requestParts = [ RequestPart.jsonContent scu ]
+            let requestParts =
+                [ if scu.IsSome then
+                      RequestPart.jsonContent scu.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/scus" headers requestParts
 
             match int status with
@@ -1426,9 +1437,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new series type
     ///</summary>
-    member this.PostSeriestypes(seriesType: seriestype) =
+    member this.PostSeriestypes(?seriesType: seriestype) =
         async {
-            let requestParts = [ RequestPart.jsonContent seriesType ]
+            let requestParts =
+                [ if seriesType.IsSome then
+                      RequestPart.jsonContent seriesType.Value ]
+
             let! (status, content) = OpenApiHttp.postAsync url "/seriestypes" headers requestParts
             return PostSeriestypes.Created(Serializer.deserialize content)
         }
@@ -1449,10 +1463,11 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a new series type rule
     ///</summary>
-    member this.PostSeriestypesRules(seriesTypeRule: seriestyperule) =
+    member this.PostSeriestypesRules(?seriesTypeRule: seriestyperule) =
         async {
             let requestParts =
-                [ RequestPart.jsonContent seriesTypeRule ]
+                [ if seriesTypeRule.IsSome then
+                      RequestPart.jsonContent seriesTypeRule.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/seriestypes/rules" headers requestParts
             return PostSeriestypesRules.Created(Serializer.deserialize content)
@@ -1495,11 +1510,12 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///</summary>
     ///<param name="id">ID of rule</param>
     ///<param name="seriesTypeRuleAttribute"></param>
-    member this.PostSeriestypesRulesAttributesById(id: int64, seriesTypeRuleAttribute: seriestyperuleattribute) =
+    member this.PostSeriestypesRulesAttributesById(id: int64, ?seriesTypeRuleAttribute: seriestyperuleattribute) =
         async {
             let requestParts =
                 [ RequestPart.path ("id", id)
-                  RequestPart.jsonContent seriesTypeRuleAttribute ]
+                  if seriesTypeRuleAttribute.IsSome then
+                      RequestPart.jsonContent seriesTypeRuleAttribute.Value ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/seriestypes/rules/{id}/attributes" headers requestParts
             return PostSeriestypesRulesAttributesById.Created(Serializer.deserialize content)
@@ -1598,7 +1614,7 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
             transactionid: int64,
             sequencenumber: int64,
             totalimagecount: int64,
-            ?requestBody: byte []
+            requestBody: byte []
         ) =
         async {
             let requestParts =
@@ -1606,8 +1622,7 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
                   RequestPart.query ("transactionid", transactionid)
                   RequestPart.query ("sequencenumber", sequencenumber)
                   RequestPart.query ("totalimagecount", totalimagecount)
-                  if requestBody.IsSome then
-                      RequestPart.binaryContent requestBody.Value ]
+                  RequestPart.binaryContent requestBody ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/transactions/{token}/image" headers requestParts
 
