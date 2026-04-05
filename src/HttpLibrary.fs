@@ -269,7 +269,7 @@ module OpenApiHttp =
         for part in parts do
             match part with
             | TextContent content ->
-                httpRequest.Content <- new StringContent(content)
+                httpRequest.Content <- new StringContent(content, Encoding.UTF8, "text/plain")
             | _ -> ()
 
         httpRequest

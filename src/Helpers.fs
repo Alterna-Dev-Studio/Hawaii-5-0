@@ -111,7 +111,10 @@ let sanitizeTypeName (typeName: string) =
             |> Seq.filter (fun c -> not (Array.contains c invalidTypeNameChars))
             |> Array.ofSeq
             |> String
-        result
+        if String.IsNullOrWhiteSpace result then
+            "UnknownType"
+        else
+            result
 
 let invalidTitle (title: string) =
     String.IsNullOrWhiteSpace title
