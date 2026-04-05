@@ -9,8 +9,8 @@ open System.Net
 open System.Net.Http
 open Fake.IO
 open Fake.Core
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
+open System.Text.Json
+open System.Text.Json.Nodes
 open System.Linq
 
 
@@ -33,28 +33,29 @@ type ApiGuruSchema = {
     emptyDefinitions: string
 }
 
-let apiGuruList() = 
-    let guruJson = 
+let apiGuruList() =
+    let guruJson =
         httpClient.GetStringAsync("https://api.apis.guru/v2/list.json")
         |> Async.AwaitTask
         |> Async.RunSynchronously
-        |> JObject.Parse
+        |> JsonNode.Parse
+    let guruObj = guruJson.AsObject()
 
     let schemas = ResizeArray<ApiGuruSchema>()
 
-    for property in guruJson.Properties() do 
-        let schemaJson = unbox<JObject> property.Value
-        let versions = unbox<JObject> schemaJson.["versions"]
-        let compatibleVersion = 
-            versions.Properties()
+    for property in guruObj do
+        let schemaJson = property.Value.AsObject()
+        let versions = schemaJson.["versions"].AsObject()
+        let compatibleVersion =
+            versions
             |> Seq.filter (fun versionInfo ->
                 let openApiVer = string versionInfo.Value.["openapiVer"]
                 not (openApiVer.StartsWith "3.1"))
             |> Seq.tryLast
-            |> Option.map (fun property -> unbox<JObject> property.Value)
+            |> Option.map (fun property -> property.Value.AsObject())
 
-        match compatibleVersion with 
-        | Some lastVersion -> 
+        match compatibleVersion with
+        | Some lastVersion ->
             schemas.Add {
                 schemaUrl = string lastVersion.["swaggerUrl"]
                 title = string lastVersion.["info"].["title"]
@@ -116,23 +117,24 @@ let publish() =
 
 let generateAndBuild(schema: ApiGuruSchema) = 
     let integrationSchema = path [ src; "hawaii.json" ]
-    let content = JObject()
-    content.Add(JProperty("schema", schema.schemaUrl))
-    content.Add(JProperty("project", schema.title))
+    let content = JsonObject()
+    content.Add("schema", JsonValue.Create(schema.schemaUrl))
+    content.Add("project", JsonValue.Create(schema.title))
     let outputDir = path [ solutionRoot; "examples"; schema.title ]
     if Directory.Exists outputDir then
         Shell.deleteDir outputDir
-    
+
     // create output directory
     Directory.ensure outputDir
 
-    content.Add(JProperty("output", outputDir))
-    content.Add(JProperty("asyncReturnType", schema.asyncReturnType))
-    content.Add(JProperty("target", schema.target))
-    content.Add(JProperty("synchronous", schema.synchronous))
-    content.Add(JProperty("emptyDefinitions", schema.emptyDefinitions))
+    content.Add("output", JsonValue.Create(outputDir))
+    content.Add("asyncReturnType", JsonValue.Create(schema.asyncReturnType))
+    content.Add("target", JsonValue.Create(schema.target))
+    content.Add("synchronous", JsonValue.Create(schema.synchronous))
+    content.Add("emptyDefinitions", JsonValue.Create(schema.emptyDefinitions))
 
-    File.WriteAllText(integrationSchema, content.ToString(Formatting.Indented))
+    let writeOptions = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(integrationSchema, content.ToJsonString(writeOptions))
     let hawaii = path [ src; "bin"; "Release"; "net10.0"; "Hawaii.dll" ]
     let configPath = path [ src; "hawaii.json" ]
     printfn $"Attempting to generate project {schema.title} from {schema.schemaUrl}"
