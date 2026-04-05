@@ -254,7 +254,7 @@ let private processOperationRequestBody
             [{
                 parameterName = parameterName
                 parameterIdent = cleanParamIdent parameterName parameters
-                required = true
+                required = operation.RequestBody.Required
                 parameterType =
                     if isFSharpTarget config.target
                     then SynType.ByteArray()
