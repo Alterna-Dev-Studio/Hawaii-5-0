@@ -73,6 +73,7 @@ module Serializer =
 
     let options = JsonSerializerOptions()
     options.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
+    options.PropertyNameCaseInsensitive <- true
     options.DefaultIgnoreCondition <- JsonIgnoreCondition.WhenWritingNull
     options.Converters.Add(TolerantStringEnumConverter())
     options.Converters.Add(JsonFSharpConverter())

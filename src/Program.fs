@@ -126,7 +126,7 @@ let readConfig file =
                 
             let overrideSchema =
                 match tryGetProperty "overrideSchema" with
-                | Some prop -> Some prop
+                | Some prop -> Some (prop.Clone())
                 | None -> None
             
             Ok {
@@ -328,11 +328,17 @@ let getSchema(schema: string) (overrideSchema: JsonElement option) =
 
     match overrideSchema with
     | None -> ()
-    | Some miniSchema -> 
-        // Merge miniSchema into schemaContents
+    | Some miniSchema ->
+        // Recursively merge miniSchema into schemaContents (matching JObject.Merge behavior)
+        let rec mergeInto (target: JsonObject) (source: JsonObject) =
+            for kvp in source do
+                let mutable existing: JsonNode = null
+                if target.TryGetPropertyValue(kvp.Key, &existing) && existing <> null && existing.GetValueKind() = JsonValueKind.Object && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Object then
+                    mergeInto (existing.AsObject()) (kvp.Value.AsObject())
+                else
+                    target.[kvp.Key] <- if kvp.Value <> null then kvp.Value.DeepClone() else null
         let miniObj = JsonNode.Parse(miniSchema.GetRawText()).AsObject()
-        for kvp in miniObj do
-            schemaContents.[kvp.Key] <- kvp.Value.DeepClone()
+        mergeInto schemaContents miniObj
 
     // Pre-process NSwag schemas and add { "produces": ["application/json"] } if missing for operations
     // we assume Hawaii is working with schemas that produce JSON
@@ -372,7 +378,8 @@ let nextTick (name: string) (visited: ResizeArray<string>) =
     |> List.choose(fun rest ->
         let mutable n = 0
         match Int32.TryParse(rest, &n) with
-        | _ -> None)
+        | true -> Some n
+        | false -> None)
     |> function
         | [ ] -> name + "1"
         | ns -> name + (string (List.max ns + 1))
