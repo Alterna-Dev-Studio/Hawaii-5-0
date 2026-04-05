@@ -218,6 +218,33 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
+    let taskYamlPetStore = {
+        schemaUrl = "https://petstore3.swagger.io/api/v3/openapi.yaml"
+        title = "TaskYamlPetStore"
+        synchronous = false
+        asyncReturnType = "task"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let oanda = {
+        schemaUrl = "./schemas/oanda.yml"
+        title = "Oanda"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let taskOanda = {
+        schemaUrl = "./schemas/oanda.yml"
+        title = "TaskOanda"
+        synchronous = false
+        asyncReturnType = "task"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
     let defaultTripPin = {
         schemaUrl = "https://services.odata.org/V4/(S(s3lb035ptje4a1j0bvkmqqa0))/TripPinServiceRW/$metadata"
         title = "TripPinService"
@@ -521,6 +548,9 @@ let integrationKnownSchemas() =
         taskPetStore
         fablePetStore
         yamlPetStore
+        taskYamlPetStore
+        oanda
+        taskOanda
         defaultTripPin
         taskTripPin
         syncTripPin
