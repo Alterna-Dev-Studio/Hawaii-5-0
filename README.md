@@ -6,7 +6,7 @@ A dotnet CLI tool to generate type-safe F# and Fable clients from OpenAPI/Swagge
 
 ### Why this fork?
 
-[Hawaii](https://github.com/Zaid-Ajaj/Hawaii) by Zaid Ajaj is an excellent tool, but the upstream repo has not seen active maintenance. Hawaii-5-0 picks up where it left off:
+[Hawaii](https://github.com/Zaid-Ajaj/Hawaii) by Zaid Ajaj is an excellent tool, but the upstream repo has not seen active maintenance. This fork (repo: `Hawaii-5-0`, NuGet package: `Hawaii5O`, CLI command: `hawaii5o`) picks up where it left off:
 
 - **Modernized stack** -- migrated from Newtonsoft.Json to System.Text.Json and upgraded to .NET 10
 - **New features** -- `fsharp-native` target, `StringEnum` converter, `text/plain` requestBody support
