@@ -271,7 +271,7 @@ module OpenApiHttp =
             |> applyHeaders parts
 
         {asyncBuilder} {
-            let! response = {getResponse}
+            use! response = {getResponse}
             let! content = {getContent}
             return (response.StatusCode, content)
         }
@@ -291,7 +291,7 @@ module OpenApiHttp =
             |> applyHeaders parts
 
         {asyncBuilder} {
-            let! response = {getResponse}
+            use! response = {getResponse}
             let! content = {getBinaryContent}
             return (response.StatusCode, content)
         }
