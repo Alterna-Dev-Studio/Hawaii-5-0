@@ -4,7 +4,7 @@
     <Description>dotnet CLI tool to generate type-safe F# and Fable clients from OpenAPI/Swagger/OData services</Description>
     <Authors>Zaid Ajaj, Jon Roberts</Authors>
     <OutputType>Exe</OutputType>
-    <ToolCommandName>hawaii</ToolCommandName>
+    <ToolCommandName>hawaii5o</ToolCommandName>
     <TargetFramework>net10.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <IsPackable>true</IsPackable>
