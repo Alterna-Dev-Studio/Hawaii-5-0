@@ -2,7 +2,7 @@
 module Domain
 
 open FSharp.Compiler.SyntaxTree
-open Newtonsoft.Json.Linq
+open System.Text.Json
 
 [<RequireQualifiedAccess>]
 type EmptyDefinitionResolution =
@@ -42,7 +42,7 @@ type CodegenConfig = {
     synchronous: bool
     resolveReferences: bool
     emptyDefinitions: EmptyDefinitionResolution
-    overrideSchema: JToken option
+    overrideSchema: JsonElement option
     filterTags: string list
     odataSchema: bool
 }
