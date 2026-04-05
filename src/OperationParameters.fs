@@ -47,7 +47,7 @@ let rec private cleanParamIdent (parameter: string) (parameters: OperationParame
 
 let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType =
     if isNull schema then 
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.JToken()
         else SynType.Object()
     else
@@ -62,7 +62,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
     | "string" when schema.Format = "date-time" -> SynType.DateTimeOffset()
     | "string" -> SynType.String()
     | "file" ->
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.ByteArray()
         else SynType.Create "File" // from Browser.Types
 
@@ -76,7 +76,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
     | "array" ->
         readParamType target schema.Items |> SynType.List
     | "object" ->
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.JObject()
         else SynType.Object()
     | _ ->
@@ -207,7 +207,7 @@ let private processOperationRequestBody
                 parameterIdent = cleanParamIdent parameterName parameters
                 required = true
                 parameterType =
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.JToken()
                     else SynType.Object()
                 docs =
@@ -256,7 +256,7 @@ let private processOperationRequestBody
                 parameterIdent = cleanParamIdent parameterName parameters
                 required = true
                 parameterType =
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.ByteArray()
                     else SynType.Create "File" // from Browser.Types
                 docs = ""

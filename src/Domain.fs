@@ -13,7 +13,14 @@ type EmptyDefinitionResolution =
 /// <summary>Describes the compilation target</summary>
 type Target =
     | FSharp
+    | FSharpNative
     | Fable
+
+let isFSharpTarget =
+    function
+    | Target.FSharp
+    | Target.FSharpNative -> true
+    | Target.Fable -> false
 
 /// <summary>Describes the async return type of the functions of the generated clients</summary>
 [<RequireQualifiedAccess>]
