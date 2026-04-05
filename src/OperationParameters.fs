@@ -47,7 +47,7 @@ let rec private cleanParamIdent (parameter: string) (parameters: OperationParame
 
 let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType =
     if isNull schema then 
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.JToken()
         else SynType.Object()
     else
@@ -62,7 +62,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
     | "string" when schema.Format = "date-time" -> SynType.DateTimeOffset()
     | "string" -> SynType.String()
     | "file" ->
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.ByteArray()
         else SynType.Create "File" // from Browser.Types
 
@@ -76,7 +76,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
     | "array" ->
         readParamType target schema.Items |> SynType.List
     | "object" ->
-        if target = Target.FSharp
+        if isFSharpTarget target
         then SynType.JObject()
         else SynType.Object()
     | _ ->
@@ -159,7 +159,7 @@ let private processOperationRequestBody
     else
         let content = operation.RequestBody.Content
 
-        if content.ContainsKey "application/json" && not (isEmptySchema content.["application/json"].Schema) then
+        if content.ContainsKey "application/json" && isNotNull content.["application/json"] && not (isEmptySchema content.["application/json"].Schema) then
             let schema = content.["application/json"].Schema
             let typeName = "body"
             let parameterName =
@@ -183,7 +183,7 @@ let private processOperationRequestBody
             [{
                 parameterName = parameterName
                 parameterIdent = cleanParamIdent parameterName parameters
-                required = true
+                required = operation.RequestBody.Required
                 parameterType = requestTypePayload
                 docs = schema.Description
                 location = "jsonContent"
@@ -191,7 +191,7 @@ let private processOperationRequestBody
                 properties = []
             }]
 
-        elif content.ContainsKey "application/json" && isEmptySchema content.["application/json"].Schema && config.emptyDefinitions = EmptyDefinitionResolution.GenerateFreeForm then
+        elif content.ContainsKey "application/json" && isNotNull content.["application/json"] && isEmptySchema content.["application/json"].Schema && config.emptyDefinitions = EmptyDefinitionResolution.GenerateFreeForm then
             let schema = content.["application/json"].Schema
             let typeName = "body"
             let parameterName =
@@ -205,9 +205,9 @@ let private processOperationRequestBody
             [{
                 parameterName = parameterName
                 parameterIdent = cleanParamIdent parameterName parameters
-                required = true
+                required = operation.RequestBody.Required
                 parameterType =
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.JToken()
                     else SynType.Object()
                 docs =
@@ -254,9 +254,9 @@ let private processOperationRequestBody
             [{
                 parameterName = parameterName
                 parameterIdent = cleanParamIdent parameterName parameters
-                required = true
+                required = operation.RequestBody.Required
                 parameterType =
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.ByteArray()
                     else SynType.Create "File" // from Browser.Types
                 docs = ""
@@ -287,13 +287,26 @@ let private processOperationRequestBody
             [{
                 parameterName = "requestBody"
                 parameterIdent = "requestBody"
-                required = false
+                required = operation.RequestBody.Required
                 parameterType = SynType.ByteArray()
                 docs = ""
                 location = "binaryContent"
                 style = "formfield"
                 properties = []
             }]
+
+        elif content.ContainsKey "text/plain" then
+            [{
+                parameterName = "requestBody"
+                parameterIdent = "requestBody"
+                required = operation.RequestBody.Required
+                parameterType = SynType.String()
+                docs = ""
+                location = "textContent"
+                style = "formfield"
+                properties = []
+            }]
+
         else []
 
 let operationParameters

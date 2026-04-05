@@ -68,8 +68,8 @@ let readConfig file =
             Error "The 'output' configuration element must be a string"
         elif isNotNull parts.["target"] && parts.["target"].Type <> JTokenType.String then
             Error "The 'target' configuration element must be a string"
-        elif isNotNull parts.["target"] && parts.["target"].ToObject<string>().ToLower().Trim() <> "fable" && parts.["target"].ToObject<string>().ToLower().Trim() <> "fsharp" then
-            Error "The 'target' configuration element can only be 'fable' or 'fsharp'"
+        elif isNotNull parts.["target"] && parts.["target"].ToObject<string>().ToLower().Trim() <> "fable" && parts.["target"].ToObject<string>().ToLower().Trim() <> "fsharp" && parts.["target"].ToObject<string>().ToLower().Trim() <> "fsharp-native" then
+            Error "The 'target' configuration element can only be 'fable', 'fsharp', or 'fsharp-native'"
         elif isNotNull parts.["project"] && parts.["project"].Type <> JTokenType.String then
             Error "The 'project' configuration element must be a string"
         elif isNotNull parts.["project"] && String.IsNullOrWhiteSpace(parts.["project"].ToString().Trim()) then
@@ -91,9 +91,14 @@ let readConfig file =
                 output = resolveRelativeFile configParent (parts.["output"].ToObject<string>())
                 project = parts.["project"].ToString().Replace("(", "").Replace(")", "")
                 target =
-                    if isNotNull parts.["target"] && parts.["target"].ToString() = "fable"
-                    then Target.Fable
-                    else Target.FSharp
+                    let targetValue =
+                        if isNotNull parts.["target"]
+                        then parts.["target"].ToString().ToLower().Trim()
+                        else "fsharp"
+                    match targetValue with
+                    | "fable" -> Target.Fable
+                    | "fsharp-native" -> Target.FSharpNative
+                    | _ -> Target.FSharp
                 asyncReturnType =
                     if isNotNull parts.["asyncReturnType"] && parts.["asyncReturnType"].ToString() = "task"
                     then AsyncReturnType.Task
@@ -430,8 +435,9 @@ let rec cleanOperationName (operationName: string) =
             |> String.concat ""
             |> cleanOperationName
     else
-        let invalidChars = [| '-'; '#'; '_'; '.'; '+'; '$'; '&'; '['; ']'; '/'; '\\'; '*'; '"'; '`' |]
+        let invalidChars = [| '-'; '#'; '_'; '.'; '+'; '$'; '&'; '['; ']'; '/'; '\\'; '*'; '"'; '`'; ' ' |]
         operation.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)
+        |> Array.filter (not << String.IsNullOrWhiteSpace)
         |> Array.map capitalize
         |> String.concat ""
 
@@ -545,7 +551,7 @@ let rec createFieldType recordName required (propertyName: string) (propertySche
         let optionalType : SynType = createFieldType recordName true propertyName propertySchema config
         SynType.Option(optionalType)
     elif isNull propertySchema then
-        if config.target = Target.FSharp
+        if isFSharpTarget config.target
         then SynType.JToken()
         else SynType.Object()
     elif not (isNull propertySchema.Reference) then
@@ -807,7 +813,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             None
         else
         let isEnum = isEnumType propertyType
-        let required = schema.Required.Contains propertyName
+        let required = schema.Required.Contains propertyName && not propertyType.Nullable
         let isObjectArray =
             propertyType.Type = "array"
             && isNotNull propertyType.Items
@@ -925,11 +931,11 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             // empty object definition
             let fieldType =
                 if required then
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.JObject()
                     else SynType.Object()
                 else
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.Option(SynType.JObject())
                     else SynType.Option(SynType.Object())
             Some fieldType
@@ -937,11 +943,11 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             // empty object definition
             let fieldType =
                 if required then
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.JToken()
                     else SynType.Object()
                 else
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.Option(SynType.JToken())
                     else SynType.Option(SynType.Object())
             Some fieldType
@@ -968,7 +974,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
 
             if isEmptySchema propertyType then
                 let freeFormType =
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.JToken()
                     else SynType.Object()
                 Some freeFormType
@@ -1058,12 +1064,12 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             let fieldType =
                 if required
                 then
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray"
                     else SynType.ResizeArray(SynType.Create "obj")
 
                 else
-                    if config.target = Target.FSharp
+                    if isFSharpTarget config.target
                     then SynType.Option (SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray")
                     else SynType.Option(SynType.ResizeArray(SynType.Create "obj"))
 
@@ -1131,7 +1137,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
         | None -> [ ]
         | Some additionalType ->
             let valueType =
-                if isFreeForm && config.target = Target.FSharp
+                if isFreeForm && isFSharpTarget config.target
                 then SynType.JToken()
                 elif isFreeForm && config.target = Target.Fable
                 then SynType.Object()
@@ -1141,14 +1147,14 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
     elif recordFields.Count = 0 then
         // couldn't add any fields
         let valueType =
-            if config.target = Target.FSharp
+            if isFSharpTarget config.target
             then SynType.JToken()
             else SynType.Object()
         let dictionaryType = SynType.Map(SynType.String(), valueType)
         [ createTypeAbbreviation recordName dictionaryType ]
     else
         let odataTypeNameField = "ODataTypeName"
-        if config.odataSchema && config.target = Target.FSharp && not (String.IsNullOrWhiteSpace schema.Title) then
+        if config.odataSchema && isFSharpTarget config.target && not (String.IsNullOrWhiteSpace schema.Title) then
             let required = false
             let fieldType = SynType.Option(SynType.String())
             let recordField = SynFieldRcd.Create(odataTypeNameField, fieldType)
@@ -1311,7 +1317,7 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
         | "array" ->
             // element type schema is null
             let elementType =
-                if config.target = Target.FSharp
+                if isFSharpTarget config.target
                 then SynType.CreateLongIdent "Newtonsoft.Json.Linq.JArray"
                 else SynType.ResizeArray(SynType.Create "obj")
 
@@ -1429,7 +1435,7 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
                                 else
                                     []
                             elif responsePayloadType.Schema.Type = "object" then
-                                if config.target = Target.FSharp then
+                                if isFSharpTarget config.target then
                                     let fieldType = SynType.JToken()
                                     [SynFieldRcd.Create("payload", fieldType).FromRcd]
                                 else
@@ -1529,7 +1535,7 @@ let createODataResponse(config: CodegenConfig) =
     let odataContextField = SynFieldRcd.Create("ODataContext", SynType.Option(SynType.String()))
 
     let recordRepr = SynTypeDefnSimpleReprRecordRcd.Create [
-        if config.target = Target.FSharp then
+        if isFSharpTarget config.target then
             { odataContextField with Attributes = [ attributes ] }
         SynFieldRcd.Create("value", SynType.Var(valueTypeArg, range0))
     ]
@@ -1674,7 +1680,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
             elif topLevelObject.Value.Type = "array" then
                 let elementType = topLevelObject.Value.Items
                 if isNull elementType then
-                    if config.target = Target.FSharp then
+                    if isFSharpTarget config.target then
                         moduleTypes.Add (createTypeAbbreviation typeName (SynType.JArray()))
                         visitedTypes.Add typeName
                     else
@@ -1780,7 +1786,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                 | EmptyDefinitionResolution.Ignore -> ()
                 | EmptyDefinitionResolution.GenerateFreeForm ->
                     let freeFormType =
-                        if config.target = Target.FSharp
+                        if isFSharpTarget config.target
                         then SynType.JToken()
                         else SynType.Object()
                     moduleTypes.Add (createTypeAbbreviationWithDocs typeName freeFormType topLevelObject.Value.Description)
@@ -1899,7 +1905,7 @@ let createOpenApiClient
     let urlContructorParam = SynSimplePat.CreateTyped(Ident.Create "url", SynType.String())
     let headersConstructorParam = SynSimplePat.CreateTyped(Ident.Create "headers", SynType.List(SynType.Create "Header"))
 
-    if config.target = Target.FSharp then
+    if isFSharpTarget config.target then
         clientMembers.Add(SynMemberDefn.CreateImplicitCtor [ httpClient ])
     else
         clientMembers.Add(SynMemberDefn.CreateImplicitCtor [
@@ -1942,7 +1948,7 @@ let createOpenApiClient
             let operationInfo = operation.Value
             if not operationInfo.Deprecated && includeOperation operationInfo config then
 
-                if config.target = Target.FSharp then
+                if isFSharpTarget config.target then
                     operationInfo.Parameters.Add(OpenApiParameter(
                         Name = "cancellationToken",
                         In = ParameterLocation.Query,
@@ -1990,7 +1996,7 @@ let createOpenApiClient
                         if parameter.required then
                             if parameter.properties.Length = 0 then
                                 yield SynExpr.CreatePartialApp(["RequestPart"; parameter.location], [
-                                    if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" then
+                                    if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" && parameter.location <> "textContent" then
                                         SynExpr.CreateParen(SynExpr.CreateTuple [
                                             stringExpr parameter.parameterName
                                             createIdent [ parameter.parameterIdent ]
@@ -2011,7 +2017,7 @@ let createOpenApiClient
                             let value =
                                 if parameter.properties.Length = 0 then
                                     SynExpr.CreatePartialApp([ "RequestPart"; parameter.location ], [
-                                        if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" then
+                                        if parameter.location <> "jsonContent" && parameter.location <> "binaryContent" && parameter.location <> "textContent" then
                                             SynExpr.CreateParen(SynExpr.CreateTuple [
                                                 stringExpr parameter.parameterName
                                                 createIdent [ parameter.parameterIdent; "Value" ]
@@ -2044,7 +2050,7 @@ let createOpenApiClient
 
                 let requestParts = Ident.Create "requestParts"
                 let httpCall httpFunc = SynExpr.CreatePartialApp(["OpenApiHttp"; httpFunc], [
-                    if config.target = Target.FSharp then
+                    if isFSharpTarget config.target then
                         // only use the HttpClient on F#/dotnet clients
                         SynExpr.CreateIdent (Ident.Create "httpClient")
                         SynExpr.CreateConstString fullPath
@@ -2062,7 +2068,7 @@ let createOpenApiClient
 
                 let wrappedReturn expr =
                     match config.target with
-                    | Target.FSharp when config.synchronous -> expr
+                    | target when isFSharpTarget target && config.synchronous -> expr
                     | _ -> SynExpr.CreateReturn expr
 
                 let responses =
@@ -2135,7 +2141,7 @@ let createOpenApiClient
                             ])
                             |> wrappedReturn
                         elif response.Content.ContainsKey "application/json" && isNotNull response.Content.["application/json"].Schema && response.Content.["application/json"].Schema.Type = "string" then
-                            if hasBinaryResponse && config.target = Target.FSharp then
+                            if hasBinaryResponse && isFSharpTarget config.target then
                                 let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                     createIdent [ "contentBinary" ]
                                 ])
@@ -2207,7 +2213,7 @@ let createOpenApiClient
                             ])
                             |> wrappedReturn
                         elif response.Content.ContainsKey "application/json" && isNotNull response.Content.["application/json"].Schema && not (isEmptySchema response.Content.["application/json"].Schema) then
-                            if hasBinaryResponse && config.target = Target.FSharp then
+                            if hasBinaryResponse && isFSharpTarget config.target then
                                 let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                     createIdent [ "contentBinary" ]
                                 ])
@@ -2249,7 +2255,7 @@ let createOpenApiClient
                                 ])
                                 |> wrappedReturn
                         elif response.Content.ContainsKey "application/json" && isNotNull response.Content.["application/json"].Schema && isEmptySchema response.Content.["application/json"].Schema && (isNotNull response.Content.["application/json"].Schema.AdditionalProperties || response.Content.["application/json"].Schema.Type = "object") then
-                            if hasBinaryResponse && config.target = Target.FSharp then
+                            if hasBinaryResponse && isFSharpTarget config.target then
                                 let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                     createIdent [ "contentBinary" ]
                                 ])
@@ -2293,7 +2299,7 @@ let createOpenApiClient
                         elif response.Content.ContainsKey "application/json" && isNotNull response.Content.["application/json"].Schema && isEmptySchema response.Content.["application/json"].Schema then
                             // reference to an empty schema
                             if config.emptyDefinitions = EmptyDefinitionResolution.GenerateFreeForm then
-                                if hasBinaryResponse && config.target = Target.FSharp then
+                                if hasBinaryResponse && isFSharpTarget config.target then
                                     let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                         createIdent [ "contentBinary" ]
                                     ])
@@ -2343,7 +2349,7 @@ let createOpenApiClient
                             createIdent [ responseType; status ]
                             |> wrappedReturn
                         elif response.Content.ContainsKey "*/*" && isNotNull (response.Content.["*/*"].Schema) && not (isEmptySchema response.Content.["*/*"].Schema) then
-                            if hasBinaryResponse && config.target = Target.FSharp then
+                            if hasBinaryResponse && isFSharpTarget config.target then
                                 let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                     createIdent [ "contentBinary" ]
                                 ])
@@ -2385,7 +2391,7 @@ let createOpenApiClient
                                 ])
                                 |> wrappedReturn
                         elif response.Content.ContainsKey "text/plain" && isNotNull response.Content.["text/plain"].Schema then
-                            if hasBinaryResponse && config.target = Target.FSharp then
+                            if hasBinaryResponse && isFSharpTarget config.target then
                                 let body = SynExpr.CreatePartialApp(["Encoding"; "UTF8"; "GetString"], [
                                     createIdent [ "contentBinary" ]
                                 ])
@@ -2521,7 +2527,7 @@ let createOpenApiClient
 
                 let destructExpr httpFunc =
                     match config.target with
-                    | Target.FSharp when config.synchronous -> deconstructResponse (httpCall httpFunc) returnExpr
+                    | target when isFSharpTarget target && config.synchronous -> deconstructResponse (httpCall httpFunc) returnExpr
                     | _ -> deconstructAsyncResponse (httpCall httpFunc) returnExpr
 
                 let clientOperation httpFunc name = SynMemberDefn.CreateMember {
@@ -2560,7 +2566,7 @@ let createOpenApiClient
                 }
 
                 match config.target with
-                | Target.FSharp when config.synchronous ->
+                | target when isFSharpTarget target && config.synchronous ->
                     clientMembers.Add (clientOperation httpFunction memberName)
                 | _ ->
                     clientMembers.Add (clientOperation httpFunctionAsync memberName)
@@ -2568,7 +2574,7 @@ let createOpenApiClient
     let clientType = SynModuleDecl.CreateType(info, Seq.toList clientMembers)
 
     let moduleContents = [
-        if config.target = Target.FSharp then
+        if isFSharpTarget config.target then
             yield SynModuleDecl.CreateOpen "System.Net"
             yield SynModuleDecl.CreateOpen "System.Net.Http"
             yield SynModuleDecl.CreateOpen "System.Text"
@@ -2787,7 +2793,7 @@ let runConfig filePath =
             write clientModuleCode [ outputDir; "Client.fs" ]
             let projectFile =
                 let packages = [
-                    if config.target = Target.FSharp then
+                    if isFSharpTarget config.target then
                         XElement.PackageReference("Fable.Remoting.Json", "2.18.0")
                         XElement.PackageReference("Newtonsoft.Json", "13.0.1")
                         if config.asyncReturnType = AsyncReturnType.Task
@@ -2798,7 +2804,7 @@ let runConfig filePath =
                 ]
 
                 let files = [
-                    if config.target = Target.FSharp then
+                    if isFSharpTarget config.target then
                         XElement.Compile "StringEnum.fs"
 
                     XElement.Compile "OpenApiHttp.fs"
@@ -2811,8 +2817,10 @@ let runConfig filePath =
                 let projectReferences = [ ]
                 generateProjectDocument packages files copyLocalLockFileAssemblies contentItems projectReferences
 
-            if config.target = Target.FSharp then
-                let httpLibrary = HttpLibrary.library (config.asyncReturnType = AsyncReturnType.Task) config.project
+            if isFSharpTarget config.target then
+                let includeFableJsonConverter = true
+                let includeJTokenPassthrough = config.target = Target.FSharpNative
+                let httpLibrary = HttpLibrary.library (config.asyncReturnType = AsyncReturnType.Task) config.project includeFableJsonConverter includeJTokenPassthrough
                 write httpLibrary [ outputDir; "OpenApiHttp.fs" ]
                 write CodeGen.stringEnumAttr [ outputDir; "StringEnum.fs" ]
             else
@@ -2900,7 +2908,7 @@ let main argv =
     Console.OutputEncoding <- Encoding.UTF8
     match argv with
     | [| "--version" |] ->
-        printfn "0.66.0"
+        printfn "0.70.0"
         0
     | [| |] ->
         Console.WriteLine(logo)
