@@ -69,39 +69,48 @@ let sanitizeParameterName (fieldName: string) =
     else
         let mutable result = fieldName
         result <- result.TrimStart('$', '@', '.', '/', '-', ' ', '+', '*', '%', '#', '!')
-        result <- result.Replace(".", "").Replace("/", "").Replace("-", "").Replace("$", "").Replace("@", "")
+        result <-
+            result
+                .Replace(".", "")
+                .Replace("/", "")
+                .Replace("-", "")
+                .Replace("$", "")
+                .Replace("@", "")
+                .Replace(" ", "")
+                .Replace("+", "")
+                .Replace("*", "")
+                .Replace("%", "")
+                .Replace("#", "")
+                .Replace("!", "")
+        result <- camelCase result
         if String.IsNullOrWhiteSpace result then
             "_param"
         elif needsBackticks result then
             "_" + result
         else
-            camelCase result
+            result
 
 let sanitizeTypeName (typeName: string) =
     if String.IsNullOrWhiteSpace typeName then
         typeName
     else
         let mutable result = typeName
-        result <- result.TrimStart('$', '@', '.', '/', '-', ' ', '+', '*', '%', '#', '!')
+        let invalidTypeNameChars =
+            [| '$'; '@'; '.'; '/'; '-'; '_'; '['; ']'; ' '; '\t'; '\r'; '\n'; '+'; '*'; '%'; '#'; '!'; '`' |]
+
+        result <- result.TrimStart(invalidTypeNameChars)
+
         if result.Contains "`" then
             result <-
                 match result.Split '`' with
                 | [| name; _ |] -> name
                 | _ -> result.Replace("`", "")
-        if result.Contains "." then
-            result <-
-                result.Split('.', StringSplitOptions.RemoveEmptyEntries)
-                |> String.concat ""
-        if result.Contains "_" then
-            result <-
-                result.Split('_', StringSplitOptions.RemoveEmptyEntries)
-                |> String.concat ""
-        if result.Contains "-" then
-            result <-
-                result.Split('-', StringSplitOptions.RemoveEmptyEntries)
-                |> String.concat ""
-        if result.Contains "[" && result.Contains "]" then
-            result <- result.Replace("[", "").Replace("]", "")
+
+        result <-
+            result
+            |> Seq.filter (fun c -> not (Array.contains c invalidTypeNameChars))
+            |> Array.ofSeq
+            |> String
         result
 
 let invalidTitle (title: string) =

@@ -287,7 +287,7 @@ let private processOperationRequestBody
             [{
                 parameterName = "requestBody"
                 parameterIdent = "requestBody"
-                required = false
+                required = operation.RequestBody.Required
                 parameterType = SynType.ByteArray()
                 docs = ""
                 location = "binaryContent"
@@ -299,7 +299,7 @@ let private processOperationRequestBody
             [{
                 parameterName = "requestBody"
                 parameterIdent = "requestBody"
-                required = false
+                required = operation.RequestBody.Required
                 parameterType = SynType.String()
                 docs = ""
                 location = "textContent"

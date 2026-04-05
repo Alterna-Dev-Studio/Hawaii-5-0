@@ -91,11 +91,14 @@ let readConfig file =
                 output = resolveRelativeFile configParent (parts.["output"].ToObject<string>())
                 project = parts.["project"].ToString().Replace("(", "").Replace(")", "")
                 target =
-                    if isNotNull parts.["target"] && parts.["target"].ToString() = "fable"
-                    then Target.Fable
-                    elif isNotNull parts.["target"] && parts.["target"].ToString() = "fsharp-native"
-                    then Target.FSharpNative
-                    else Target.FSharp
+                    let targetValue =
+                        if isNotNull parts.["target"]
+                        then parts.["target"].ToString().ToLower().Trim()
+                        else "fsharp"
+                    match targetValue with
+                    | "fable" -> Target.Fable
+                    | "fsharp-native" -> Target.FSharpNative
+                    | _ -> Target.FSharp
                 asyncReturnType =
                     if isNotNull parts.["asyncReturnType"] && parts.["asyncReturnType"].ToString() = "task"
                     then AsyncReturnType.Task
