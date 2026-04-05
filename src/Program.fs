@@ -430,8 +430,9 @@ let rec cleanOperationName (operationName: string) =
             |> String.concat ""
             |> cleanOperationName
     else
-        let invalidChars = [| '-'; '#'; '_'; '.'; '+'; '$'; '&'; '['; ']'; '/'; '\\'; '*'; '"'; '`' |]
+        let invalidChars = [| '-'; '#'; '_'; '.'; '+'; '$'; '&'; '['; ']'; '/'; '\\'; '*'; '"'; '`'; ' ' |]
         operation.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)
+        |> Array.filter (not << String.IsNullOrWhiteSpace)
         |> Array.map capitalize
         |> String.concat ""
 
@@ -807,7 +808,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             None
         else
         let isEnum = isEnumType propertyType
-        let required = schema.Required.Contains propertyName
+        let required = schema.Required.Contains propertyName && not propertyType.Nullable
         let isObjectArray =
             propertyType.Type = "array"
             && isNotNull propertyType.Items
