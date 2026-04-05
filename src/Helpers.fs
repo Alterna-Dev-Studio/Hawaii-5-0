@@ -26,23 +26,83 @@ let normalizeFullCaps (input: string) =
     then input.ToLower()
     else input
 
+let needsBackticks (identifier: string) =
+    if String.IsNullOrWhiteSpace identifier then
+        false
+    else
+        identifier.Contains "."
+        || identifier.Contains "/"
+        || identifier.Contains "@"
+        || identifier.Contains "$"
+        || identifier.Contains "-"
+        || identifier.Contains " "
+        || identifier.Contains "+"
+        || identifier.Contains "*"
+        || identifier.Contains "%"
+        || identifier.Contains "#"
+        || identifier.Contains "!"
+        || match identifier with
+           | "abstract" | "and" | "as" | "assert" | "base" | "begin" | "class"
+           | "default" | "delegate" | "do" | "done" | "downcast" | "downto" | "elif"
+           | "else" | "end" | "exception" | "extern" | "false" | "finally" | "for"
+           | "fun" | "function" | "global" | "if" | "in" | "inherit" | "inline"
+           | "interface" | "internal" | "lazy" | "let" | "match" | "member" | "module"
+           | "mutable" | "namespace" | "new" | "not" | "null" | "of" | "open" | "or"
+           | "override" | "private" | "public" | "rec" | "return" | "sig" | "static"
+           | "struct" | "then" | "to" | "true" | "try" | "type" | "upcast" | "use"
+           | "val" | "void" | "when" | "while" | "with" | "yield" -> true
+           | _ -> false
+
+let escapeIdentifier (identifier: string) =
+    if String.IsNullOrWhiteSpace identifier then
+        identifier
+    elif identifier.StartsWith("``") && identifier.EndsWith("``") then
+        identifier
+    elif needsBackticks identifier then
+        $"``{identifier}``"
+    else
+        identifier
+
+let sanitizeParameterName (fieldName: string) =
+    if String.IsNullOrWhiteSpace fieldName then
+        fieldName
+    else
+        let mutable result = fieldName
+        result <- result.TrimStart('$', '@', '.', '/', '-', ' ', '+', '*', '%', '#', '!')
+        result <- result.Replace(".", "").Replace("/", "").Replace("-", "").Replace("$", "").Replace("@", "")
+        if String.IsNullOrWhiteSpace result then
+            "_param"
+        elif needsBackticks result then
+            "_" + result
+        else
+            camelCase result
+
 let sanitizeTypeName (typeName: string) =
     if String.IsNullOrWhiteSpace typeName then
         typeName
-    elif typeName.Contains "`" then
-        match typeName.Split '`' with
-        | [| name; typeArgArity |] -> name
-        | _ -> typeName.Replace("`", "")
-    elif typeName.Contains "." then
-        typeName.Split('.', StringSplitOptions.RemoveEmptyEntries)
-        |> String.concat ""
-    elif typeName.Contains "_" then
-        typeName.Split('_', StringSplitOptions.RemoveEmptyEntries)
-        |> String.concat ""
-    elif typeName.Contains "[" && typeName.Contains "]" then
-        typeName.Replace("[", "").Replace("]", "")
     else
-        typeName
+        let mutable result = typeName
+        result <- result.TrimStart('$', '@', '.', '/', '-', ' ', '+', '*', '%', '#', '!')
+        if result.Contains "`" then
+            result <-
+                match result.Split '`' with
+                | [| name; _ |] -> name
+                | _ -> result.Replace("`", "")
+        if result.Contains "." then
+            result <-
+                result.Split('.', StringSplitOptions.RemoveEmptyEntries)
+                |> String.concat ""
+        if result.Contains "_" then
+            result <-
+                result.Split('_', StringSplitOptions.RemoveEmptyEntries)
+                |> String.concat ""
+        if result.Contains "-" then
+            result <-
+                result.Split('-', StringSplitOptions.RemoveEmptyEntries)
+                |> String.concat ""
+        if result.Contains "[" && result.Contains "]" then
+            result <- result.Replace("[", "").Replace("]", "")
+        result
 
 let invalidTitle (title: string) =
     String.IsNullOrWhiteSpace title

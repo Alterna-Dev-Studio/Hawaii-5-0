@@ -159,7 +159,7 @@ let private processOperationRequestBody
     else
         let content = operation.RequestBody.Content
 
-        if content.ContainsKey "application/json" && not (isEmptySchema content.["application/json"].Schema) then
+        if content.ContainsKey "application/json" && isNotNull content.["application/json"] && not (isEmptySchema content.["application/json"].Schema) then
             let schema = content.["application/json"].Schema
             let typeName = "body"
             let parameterName =
@@ -191,7 +191,7 @@ let private processOperationRequestBody
                 properties = []
             }]
 
-        elif content.ContainsKey "application/json" && isEmptySchema content.["application/json"].Schema && config.emptyDefinitions = EmptyDefinitionResolution.GenerateFreeForm then
+        elif content.ContainsKey "application/json" && isNotNull content.["application/json"] && isEmptySchema content.["application/json"].Schema && config.emptyDefinitions = EmptyDefinitionResolution.GenerateFreeForm then
             let schema = content.["application/json"].Schema
             let typeName = "body"
             let parameterName =
