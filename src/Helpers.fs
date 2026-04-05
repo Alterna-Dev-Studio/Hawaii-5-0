@@ -41,6 +41,7 @@ let needsBackticks (identifier: string) =
         || identifier.Contains "%"
         || identifier.Contains "#"
         || identifier.Contains "!"
+        || Char.IsDigit identifier.[0]
         || match identifier with
            | "abstract" | "and" | "as" | "assert" | "base" | "begin" | "class"
            | "default" | "delegate" | "do" | "done" | "downcast" | "downto" | "elif"
@@ -113,8 +114,10 @@ let sanitizeTypeName (typeName: string) =
             |> String
         if String.IsNullOrWhiteSpace result then
             "UnknownType"
-        else
+        elif Char.IsLetter result.[0] || result.[0] = '_' then
             result
+        else
+            "T" + result
 
 let invalidTitle (title: string) =
     String.IsNullOrWhiteSpace title
