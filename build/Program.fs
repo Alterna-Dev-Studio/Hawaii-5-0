@@ -79,7 +79,7 @@ let pack() =
         failwith "Pack failed"
     else
         let outputPath = path [ src; "bin"; "Release" ]
-        if Shell.Exec(Tools.dotnet, sprintf "tool install -g hawaii --add-source %s" outputPath) <> 0
+        if Shell.Exec(Tools.dotnet, sprintf "tool install -g Hawaii5O --add-source %s" outputPath) <> 0
         then failwith "Local install failed"
 
 let capitalize (input: string) =
