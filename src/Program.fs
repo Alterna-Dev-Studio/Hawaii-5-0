@@ -110,11 +110,17 @@ let readConfig file =
         elif tryGetProperty "emptyDefinitions" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
             |> Option.exists (fun s -> let lower = s.ToLower().Trim() in lower <> "ignore" && lower <> "free-form") then
             Error "The 'emptyDefinitions' configuration element must either be 'ignore' or 'free-form'"
+        elif tryGetProperty "unionStrategy" |> Option.exists (fun p -> p.ValueKind <> JsonValueKind.String) then
+            Error "The 'unionStrategy' configuration element must be a string"
+        elif tryGetProperty "unionStrategy" |> Option.bind (fun p -> if p.ValueKind = JsonValueKind.String then Some (p.GetString()) else None)
+            |> Option.exists (fun s -> let lower = s.ToLower().Trim() in lower <> "discriminated-union" && lower <> "json-element") then
+            Error "The 'unionStrategy' configuration element can only be 'discriminated-union' (default) or 'json-element'"
         else
             let configParent = Path.GetDirectoryName file
             let targetStr = getString "target"
             let asyncReturnTypeStr = getString "asyncReturnType"
             let emptyDefsStr = getString "emptyDefinitions"
+            let unionStrategyStr = getString "unionStrategy"
             
             let filterTags =
                 match tryGetProperty "filterTags" with
@@ -155,6 +161,10 @@ let readConfig file =
                 overrideSchema = overrideSchema
                 filterTags = filterTags
                 odataSchema = false
+                unionStrategy =
+                    if not (isNull unionStrategyStr) && unionStrategyStr.ToLower().Trim() = "json-element"
+                    then UnionStrategy.JsonElement
+                    else UnionStrategy.DiscriminatedUnion
             }
     with
     | error ->
@@ -685,7 +695,7 @@ let rec createFieldType recordName required (propertyName: string) (propertySche
             then sanitizeTypeName propertySchema.Reference.Id
             else sanitizeTypeName propertySchema.Title
         SynType.Create typeName
-    elif propertySchema.OneOf.Count > 1 || propertySchema.AnyOf.Count > 1 then
+    elif (propertySchema.OneOf.Count > 1 || propertySchema.AnyOf.Count > 1) && config.unionStrategy = UnionStrategy.DiscriminatedUnion then
         let unionName = sanitizeTypeName (recordName + capitalize propertyName)
         SynType.Create unionName
     else
@@ -1069,7 +1079,8 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
         ]
 
         let isAnyOfOneOf =
-            propertyType.OneOf.Count > 1 || propertyType.AnyOf.Count > 1
+            (propertyType.OneOf.Count > 1 || propertyType.AnyOf.Count > 1)
+            && config.unionStrategy = UnionStrategy.DiscriminatedUnion
 
         if propertyType.Deprecated then
             // skip deprecated propertie
@@ -2039,7 +2050,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                     let factory = FactoryFunction.Create
                     for createdType in createRecordFromSchema typeName topLevelObject.Value visitedTypes config openApiDocument factory do
                         moduleTypes.Add createdType
-            elif not (visitedTypes.Contains typeName) then
+            elif not (visitedTypes.Contains typeName) && config.unionStrategy = UnionStrategy.DiscriminatedUnion then
                 let schemas =
                     if topLevelObject.Value.OneOf.Count > 1 then topLevelObject.Value.OneOf :> IList<OpenApiSchema>
                     elif topLevelObject.Value.AnyOf.Count > 1 then topLevelObject.Value.AnyOf :> IList<OpenApiSchema>
