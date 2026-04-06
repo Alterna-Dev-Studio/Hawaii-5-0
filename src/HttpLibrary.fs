@@ -73,11 +73,60 @@ module Serializer =
                         let (uc, _) = FSharpValue.GetUnionFields(value :> obj, t)
                         writer.WriteStringValue(uc.Name)
 
+    /// A converter for generated anyOf/oneOf discriminated unions.
+    /// Attempts to deserialize as each union case in order, picking the first that succeeds.
+    type UnionCaseJsonConverterFactory() =
+        inherit JsonConverterFactory()
+        override _.CanConvert(t: System.Type) =
+            FSharpType.IsUnion t &&
+            t.GetCustomAttributes(typeof<CompilationRepresentationAttribute>, false).Length = 0 &&
+            not (t.GetCustomAttributes(true)
+                 |> Seq.exists (fun a -> let n = a.GetType().FullName in not (isNull n) && n.EndsWith("StringEnumAttribute"))) &&
+            (FSharpType.GetUnionCases(t)
+             |> Array.forall (fun uc -> uc.GetFields().Length = 1))
+
+        override this.CreateConverter(typeToConvert: System.Type, _options: JsonSerializerOptions) =
+            let converterType = typedefof<UnionCaseJsonConverter<_>>.MakeGenericType(typeToConvert)
+            System.Activator.CreateInstance(converterType) :?> JsonConverter
+
+    and UnionCaseJsonConverter<'T>() =
+        inherit JsonConverter<'T>()
+        let cases = FSharpType.GetUnionCases(typeof<'T>)
+
+        override _.Read(reader: byref<Utf8JsonReader>, _typeToConvert: System.Type, _options: JsonSerializerOptions) : 'T =
+            let doc = JsonDocument.ParseValue(&reader)
+            let rawText = doc.RootElement.GetRawText()
+            let mutable result = Unchecked.defaultof<'T>
+            let mutable found = false
+            for case in cases do
+                if not found then
+                    let fields = case.GetFields()
+                    if fields.Length = 1 then
+                        try
+                            let innerOptions = JsonSerializerOptions(_options)
+                            // Remove this converter to avoid recursion
+                            let value = JsonSerializer.Deserialize(rawText, fields.[0].PropertyType, innerOptions)
+                            if not (isNull (value :> obj)) then
+                                result <- FSharpValue.MakeUnion(case, [| value |]) :?> 'T
+                                found <- true
+                        with _ -> ()
+            if not found then
+                raise (JsonException(sprintf "Could not deserialize %s from: %s" typeof<'T>.Name (if rawText.Length > 100 then rawText.Substring(0, 100) + "..." else rawText)))
+            result
+
+        override _.Write(writer: Utf8JsonWriter, value: 'T, options: JsonSerializerOptions) =
+            let (_case, fields) = FSharpValue.GetUnionFields(value :> obj, typeof<'T>)
+            if fields.Length = 1 then
+                JsonSerializer.Serialize(writer, fields.[0], options)
+            else
+                writer.WriteNullValue()
+
     let options = JsonSerializerOptions()
     options.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
     options.PropertyNameCaseInsensitive <- true
     options.DefaultIgnoreCondition <- JsonIgnoreCondition.WhenWritingNull
     options.Converters.Add(TolerantStringEnumConverter())
+    options.Converters.Add(UnionCaseJsonConverterFactory())
     options.Converters.Add(JsonFSharpConverter())
     let serialize<'t> (value: 't) = JsonSerializer.Serialize(value, options)
     let deserialize<'t> (content: string) = JsonSerializer.Deserialize<'t>(content, options)

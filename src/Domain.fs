@@ -33,6 +33,14 @@ type FactoryFunction =
     | Create
     | None
 
+/// Controls how multi-element anyOf/oneOf schemas are represented in generated code
+[<RequireQualifiedAccess>]
+type UnionStrategy =
+    /// Generate F# discriminated unions (default)
+    | DiscriminatedUnion
+    /// Fall back to JsonElement (pre-v0.80 behavior)
+    | JsonElement
+
 type CodegenConfig = {
     schema: string
     output: string
@@ -45,6 +53,7 @@ type CodegenConfig = {
     overrideSchema: JsonElement option
     filterTags: string list
     odataSchema: bool
+    unionStrategy: UnionStrategy
 }
 
 type OperationParameter = {
