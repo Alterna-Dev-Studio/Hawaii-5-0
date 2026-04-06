@@ -29,7 +29,7 @@ There is no unit test project. Testing is integration-only via `generate-and-bui
 ```
 hawaii.json config
   -> Program.fs: readConfig -> CodegenConfig record
-  -> Program.fs: getSchema -> loads local/remote JSON and XML (OData), merges overrideSchema; remote YAML bypasses getSchema (raw stream), so overrideSchema does not apply
+  -> Program.fs: getSchema -> loads local/remote JSON, YAML, and XML (OData), merges overrideSchema
   -> Microsoft.OpenApi.Readers: parses into OpenApiDocument
   -> Program.fs: createGlobalTypesModule -> F# AST for Types.fs (records, enums, response DUs)
   -> Program.fs: createOpenApiClient -> F# AST for Client.fs (HTTP client class)

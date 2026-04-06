@@ -301,19 +301,59 @@ let readLocalODataSchema (schemaUrl: string) =
     let writer = OpenApiJsonWriter(stringTextWriter)
     openApiModel.SerializeAsV3(writer);
     stringTextWriter.ToString()
+let readYamlSchemaAsJson (stream: Stream) =
+    let reader = OpenApiStreamReader()
+    let result =
+        reader.ReadAsync(stream)
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
+    if isNotNull result.OpenApiDiagnostic && result.OpenApiDiagnostic.Errors.Count > 0 then
+        for error in result.OpenApiDiagnostic.Errors do
+            Console.WriteLine $"  Schema error: {error.Message}"
+    if isNull result.OpenApiDocument then
+        let errors =
+            if isNotNull result.OpenApiDiagnostic then
+                result.OpenApiDiagnostic.Errors
+                |> Seq.map (fun e -> e.Message)
+                |> String.concat "; "
+            else
+                "unknown error"
+        failwith $"Failed to parse YAML schema: {errors}"
+    use stringWriter = new StringWriter()
+    let jsonWriter = OpenApiJsonWriter(stringWriter)
+    result.OpenApiDocument.SerializeAsV3(jsonWriter)
+    stringWriter.ToString()
+
+let isYamlFile (path: string) =
+    path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)
+    || path.EndsWith(".yml", StringComparison.OrdinalIgnoreCase)
+
 let getSchema(schema: string) (overrideSchema: JsonElement option) =
     let schemaContents =
-        if File.Exists schema && schema.EndsWith ".json" then
+        if File.Exists schema && schema.EndsWith(".json", StringComparison.OrdinalIgnoreCase) then
             let content = File.ReadAllText schema
             JsonNode.Parse(content).AsObject()
-        elif File.Exists schema && schema.EndsWith ".xml" then
+        elif File.Exists schema && schema.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) then
             Console.WriteLine "Detected local OData schema"
             let openApiJson = readLocalODataSchema schema
             JsonNode.Parse(openApiJson).AsObject()
+        elif File.Exists schema && isYamlFile schema then
+            Console.WriteLine "Detected local YAML schema"
+            use stream = File.OpenRead(schema)
+            let jsonContent = readYamlSchemaAsJson stream
+            JsonNode.Parse(jsonContent).AsObject()
         elif schema.StartsWith "http" && schema.EndsWith "$metadata" then
             Console.WriteLine "Detected external OData schema"
             let openApiJson = readExternalODataSchema schema
             JsonNode.Parse(openApiJson).AsObject()
+        elif schema.StartsWith "http" && isYamlFile schema then
+            Console.WriteLine "Detected external YAML schema"
+            use stream =
+                client.GetStreamAsync(schema)
+                |> Async.AwaitTask
+                |> Async.RunSynchronously
+            let jsonContent = readYamlSchemaAsJson stream
+            JsonNode.Parse(jsonContent).AsObject()
         elif schema.StartsWith "http" then
             let content =
                 client.GetStringAsync(schema)
@@ -2792,26 +2832,22 @@ let runConfig filePath =
     | Ok config ->
         let schema =
             if config.schema.StartsWith "http" && config.resolveReferences then
-                let schemaContent =
-                    config.schema
-                    |> client.GetStringAsync
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
+                let jsonContent =
+                    if isYamlFile config.schema then
+                        use stream =
+                            client.GetStreamAsync(config.schema)
+                            |> Async.AwaitTask
+                            |> Async.RunSynchronously
+                        readYamlSchemaAsJson stream
+                    else
+                        client.GetStringAsync(config.schema)
+                        |> Async.AwaitTask
+                        |> Async.RunSynchronously
 
-                let schemaJson = JsonNode.Parse(schemaContent).AsObject()
+                let schemaJson = JsonNode.Parse(jsonContent).AsObject()
                 let processedSchema = preprocessRelativeExternalReferences schemaJson config.schema
                 getSchema (processedSchema.ToJsonString()) config.overrideSchema
 
-            elif config.schema.StartsWith "http" && config.schema.EndsWith ".json" then
-                getSchema config.schema config.overrideSchema
-            elif config.schema.StartsWith "http" && config.schema.EndsWith ".yaml" then
-                let schemaContent =
-                    config.schema
-                    |> client.GetStringAsync
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-                let schemaBytes = Encoding.UTF8.GetBytes(schemaContent)
-                new MemoryStream(schemaBytes) :> Stream
             elif config.schema.StartsWith "http" then
                 getSchema config.schema config.overrideSchema
             else
@@ -2893,26 +2929,22 @@ let showTags filePath =
     | Ok config ->
         let schema =
             if config.schema.StartsWith "http" && config.resolveReferences then
-                let schemaContent =
-                    config.schema
-                    |> client.GetStringAsync
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
+                let jsonContent =
+                    if isYamlFile config.schema then
+                        use stream =
+                            client.GetStreamAsync(config.schema)
+                            |> Async.AwaitTask
+                            |> Async.RunSynchronously
+                        readYamlSchemaAsJson stream
+                    else
+                        client.GetStringAsync(config.schema)
+                        |> Async.AwaitTask
+                        |> Async.RunSynchronously
 
-                let schemaJson = JsonNode.Parse(schemaContent).AsObject()
+                let schemaJson = JsonNode.Parse(jsonContent).AsObject()
                 let processedSchema = preprocessRelativeExternalReferences schemaJson config.schema
-                getSchema (processedSchema.ToString()) config.overrideSchema
+                getSchema (processedSchema.ToJsonString()) config.overrideSchema
 
-            elif config.schema.StartsWith "http" && config.schema.EndsWith ".json" then
-                getSchema config.schema config.overrideSchema
-            elif config.schema.StartsWith "http" && config.schema.EndsWith ".yaml" then
-                let schemaContent =
-                    config.schema
-                    |> client.GetStringAsync
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-                let schemaBytes = Encoding.UTF8.GetBytes(schemaContent)
-                new MemoryStream(schemaBytes) :> Stream
             elif config.schema.StartsWith "http" then
                 getSchema config.schema config.overrideSchema
             else
