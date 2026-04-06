@@ -628,6 +628,27 @@ let (|IntEnum|_|) (typeName: string) (schema: OpenApiSchema) =
     else
         None
 
+[<RequireQualifiedAccess>]
+type UnionVariant =
+    | Ref of typeName: string
+    | Primitive of primitiveType: string * format: string option
+    | InlineObject of schema: OpenApiSchema
+    | Unsupported
+
+let classifyAnyOfOneOf (schemas: IList<OpenApiSchema>) : UnionVariant list =
+    schemas
+    |> Seq.map (fun s ->
+        if not (isNull s.Reference) then
+            UnionVariant.Ref (sanitizeTypeName s.Reference.Id)
+        elif s.Type = "string" || s.Type = "number" || s.Type = "integer" || s.Type = "boolean" then
+            UnionVariant.Primitive (s.Type, if isNull s.Format then None else Some s.Format)
+        elif s.Type = "object" && s.Properties.Count > 0 then
+            UnionVariant.InlineObject s
+        else
+            UnionVariant.Unsupported
+    )
+    |> Seq.toList
+
 let rec createFieldType recordName required (propertyName: string) (propertySchema: OpenApiSchema) (config: CodegenConfig) =
     if not required then
         let optionalType : SynType = createFieldType recordName true propertyName propertySchema config
