@@ -68,11 +68,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
 
     | _ when not (isNull schema.Reference) ->
         // working with a reference type
-        let typeName =
-            if invalidTitle schema.Title
-            then sanitizeTypeName schema.Reference.Id
-            else sanitizeTypeName schema.Title
-        SynType.Create typeName
+        SynType.Create (referencedSchemaTypeName schema)
     | "array" ->
         readParamType target schema.Items |> SynType.List
     | _ when isObjectSchema schema ->
