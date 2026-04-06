@@ -542,6 +542,35 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
+    // ably.net/control -- real-world schema with 12 oneOf/anyOf patterns.
+    // Previously failed (FS0039) due to multi-element oneOf on rule_response.
+    let defaultAblyControl = {
+        schemaUrl = "./schemas/ably-control.json"
+        title = "AblyControl"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let taskAblyControl = {
+        schemaUrl = "./schemas/ably-control.json"
+        title = "TaskAblyControl"
+        synchronous = false
+        asyncReturnType = "task"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let fableAblyControl = {
+        schemaUrl = "./schemas/ably-control.json"
+        title = "FableAblyControl"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fable"
+        emptyDefinitions = "ignore"
+    }
+
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -584,6 +613,9 @@ let integrationKnownSchemas() =
         taskUnlimitedResponses
         syncUnlimitedResponses
         fableUnlimitedResponses
+        defaultAblyControl
+        taskAblyControl
+        fableAblyControl
     ]
 
     for (index, schema) in List.indexed schemas do 
