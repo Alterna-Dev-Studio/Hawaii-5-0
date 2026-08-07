@@ -2,7 +2,6 @@
 name: pr-comments-resolve
 description: Resolve PR review comments — evaluate, fix if needed, reply, and resolve threads
 argument-hint: "<PR-number>"
-disable-model-invocation: true
 allowed-tools:
   - Bash(gh *)
   - Bash(git *)
