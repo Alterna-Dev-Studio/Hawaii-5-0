@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskPodiosuite.Types
 open TaskPodiosuite.Http
-open FSharp.Control.Tasks
 
 type TaskPodiosuiteClient(httpClient: HttpClient) =
     ///<summary>

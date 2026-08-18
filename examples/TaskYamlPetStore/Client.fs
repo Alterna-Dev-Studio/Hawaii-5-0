@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskYamlPetStore.Types
 open TaskYamlPetStore.Http
-open FSharp.Control.Tasks
 
 ///This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
 ///Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!

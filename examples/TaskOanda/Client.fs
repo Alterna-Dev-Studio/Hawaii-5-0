@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskOanda.Types
 open TaskOanda.Http
-open FSharp.Control.Tasks
 
 ///The full OANDA v20 REST API Specification. This specification defines how to interact with v20 Accounts, Trades, Orders, Pricing and more.
 type TaskOandaClient(httpClient: HttpClient) =

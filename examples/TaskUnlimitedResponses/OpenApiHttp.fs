@@ -8,7 +8,7 @@ open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Threading
-open FSharp.Control.Tasks
+
 
 module Serializer =
     open Microsoft.FSharp.Reflection
