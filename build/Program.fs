@@ -116,7 +116,8 @@ let publish() =
         then failwith "Publish failed"
 
 let generateAndBuild(schema: ApiGuruSchema) = 
-    let integrationSchema = path [ src; "hawaii.json" ]
+    // scratch config, rewritten from scratch for every schema -- kept under obj/ so it stays out of git
+    let integrationSchema = path [ src; "obj"; "hawaii.json" ]
     let content = JsonObject()
     content.Add("schema", JsonValue.Create(schema.schemaUrl))
     content.Add("project", JsonValue.Create(schema.title))
@@ -134,9 +135,10 @@ let generateAndBuild(schema: ApiGuruSchema) =
     content.Add("emptyDefinitions", JsonValue.Create(schema.emptyDefinitions))
 
     let writeOptions = JsonSerializerOptions(WriteIndented = true)
+    Directory.ensure (path [ src; "obj" ])
     File.WriteAllText(integrationSchema, content.ToJsonString(writeOptions))
     let hawaii = path [ src; "bin"; "Release"; "net10.0"; "Hawaii.dll" ]
-    let configPath = path [ src; "hawaii.json" ]
+    let configPath = integrationSchema
     printfn $"Attempting to generate project {schema.title} from {schema.schemaUrl}"
     if Shell.Exec(Tools.dotnet, $"{hawaii} --config {configPath} --no-logo", src) <> 0 then
         failwith $"Failed to generate project {schema.title}"
