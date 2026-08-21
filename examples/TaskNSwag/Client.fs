@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskNSwag.Types
 open TaskNSwag.Http
-open FSharp.Control.Tasks
 
 ///REST endpoints of NSwag
 type TaskNSwagClient(httpClient: HttpClient) =

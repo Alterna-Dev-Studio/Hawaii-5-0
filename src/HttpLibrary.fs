@@ -481,7 +481,7 @@ let library isTask projectName =
 
     content
         .Replace("{projectName}", projectName)
-        .Replace("{taskLibrary}", if isTask then "open FSharp.Control.Tasks" else "")
+        .Replace("{taskLibrary}", "")
         .Replace("{asyncBuilder}", if isTask then "task" else "async")
         .Replace("{cancellationArgument}", "(cancellationToken: CancellationToken option)")
         .Replace("{cancellationParameter}", "cancellationToken")

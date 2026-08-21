@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskUnlimitedResponses.Types
 open TaskUnlimitedResponses.Http
-open FSharp.Control.Tasks
 
 ///Spec containing paths with multiple responses
 type TaskUnlimitedResponsesClient(httpClient: HttpClient) =

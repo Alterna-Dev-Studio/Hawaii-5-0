@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskSlicebox.Types
 open TaskSlicebox.Http
-open FSharp.Control.Tasks
 
 ///Slicebox - safe sharing of medical images
 type TaskSliceboxClient(httpClient: HttpClient) =

@@ -2668,9 +2668,6 @@ let createOpenApiClient
         yield SynModuleDecl.CreateOpen $"{config.project}.Types"
         yield SynModuleDecl.CreateOpen $"{config.project}.Http"
 
-        if config.asyncReturnType = AsyncReturnType.Task then
-            // from the Ply package
-            yield SynModuleDecl.CreateOpen "FSharp.Control.Tasks"
         // extra types generated from parameters
         for extraType in extraTypes do
             yield extraType
@@ -2887,8 +2884,6 @@ let runConfig filePath =
                 let packages = [
                     if isFSharpTarget config.target then
                         XElement.PackageReference("FSharp.SystemTextJson", "1.3.13")
-                        if config.asyncReturnType = AsyncReturnType.Task
-                        then XElement.PackageReference("Ply", "0.3.1")
                     else
                         XElement.PackageReference("Fable.SimpleJson", "3.21.0")
                         XElement.PackageReference("Fable.SimpleHttp", "3.0.0")

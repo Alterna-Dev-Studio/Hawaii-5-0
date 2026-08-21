@@ -6,7 +6,6 @@ open System.Text
 open System.Threading
 open TaskSwashbuckle.Types
 open TaskSwashbuckle.Http
-open FSharp.Control.Tasks
 
 type TaskSwashbuckleClient(httpClient: HttpClient) =
     member this.GetTime(?cancellationToken: CancellationToken) =
