@@ -625,33 +625,6 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
-    let defaultUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "UntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "TaskUntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "FableUntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -703,9 +676,6 @@ let integrationKnownSchemas() =
         defaultUntypedObjectRequestBody
         taskUntypedObjectRequestBody
         fableUntypedObjectRequestBody
-        defaultUntypedObjectNested
-        taskUntypedObjectNested
-        fableUntypedObjectNested
     ]
 
     for (index, schema) in List.indexed schemas do 
