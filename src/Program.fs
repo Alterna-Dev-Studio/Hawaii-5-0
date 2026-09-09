@@ -920,7 +920,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             && (isNull propertyType.AllOf || propertyType.AllOf.Count = 0)
             && (isNull propertyType.AnyOf || propertyType.AnyOf.Count = 0)
 
-        let isEmptyDefinition = isNull propertyType.Type
+        let isEmptyDefinition = isNull propertyType.Type && propertyType.Properties.Count = 0
 
         let isKeyValuePairObject =
             propertyType.Type = "object"
@@ -948,7 +948,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             && (isNull propertyType.Items.AnyOf || propertyType.Items.AnyOf.Count = 0)
 
         let isPrimitve = List.forall id [
-            (propertyType.Type <> "object" || not (isNull propertyType.Reference))
+            (not (isObjectSchema propertyType) || not (isNull propertyType.Reference))
             not isEnum
             not isObjectArray
             not isEnumArray
@@ -1047,7 +1047,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
                 Some fieldType
             | _ ->
                 None
-        else if propertyType.Type = "object" then
+        else if isObjectSchema propertyType then
             // handle nested objects
             let nestedPropertyNames =
                 propertyType.Properties
@@ -1823,7 +1823,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                     // create type abbreviation
                     moduleTypes.Add (createTypeAbbreviation typeName (SynType.List(SynType.Bool())))
                     visitedTypes.Add typeName
-                elif elementType.Type = "object" && not (visitedTypes.Contains $"{typeName}ArrayItem") then
+                elif isObjectSchema elementType && not (visitedTypes.Contains $"{typeName}ArrayItem") then
                     let elementTypeName = $"{typeName}ArrayItem"
                     visitedTypes.Add typeName
                     visitedTypes.Add elementTypeName
