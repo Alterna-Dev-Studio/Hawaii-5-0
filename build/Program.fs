@@ -544,33 +544,6 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
-    let defaultUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "UntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "TaskUntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "FableUntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -613,9 +586,6 @@ let integrationKnownSchemas() =
         taskUnlimitedResponses
         syncUnlimitedResponses
         fableUnlimitedResponses
-        defaultUntypedObjectResponse
-        taskUntypedObjectResponse
-        fableUntypedObjectResponse
     ]
 
     for (index, schema) in List.indexed schemas do 
