@@ -808,6 +808,12 @@ type PostForwardingRules =
     ///the created forwarding rule
     | Created of payload: forwardingrule
 
+type PostImagesPayload =
+    { ///The dataset file
+      dataset: string }
+    ///Creates an instance of PostImagesPayload with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (dataset: string): PostImagesPayload = { dataset = dataset }
+
 [<RequireQualifiedAccess>]
 type PostImages =
     ///meta data for added dataset on the image level of the DICOM hierarchy. Status code 200 signifies that this image was already present in the slicebox database.
@@ -925,6 +931,12 @@ type GetImportSessionsImagesById =
     | OK of payload: list<image>
     ///import session not found (invalid ID)
     | NotFound
+
+type PostImportSessionsImagesByIdPayload =
+    { ///The dataset file
+      dataset: string }
+    ///Creates an instance of PostImportSessionsImagesByIdPayload with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (dataset: string): PostImportSessionsImagesByIdPayload = { dataset = dataset }
 
 [<RequireQualifiedAccess>]
 type PostImportSessionsImagesById =
