@@ -544,114 +544,6 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
-    let defaultUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "UntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "TaskUntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectResponse = {
-        schemaUrl = "./schemas/UntypedObjectResponse.json"
-        title = "FableUntypedObjectResponse"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
-    let defaultUntypedObjectArrayProperty = {
-        schemaUrl = "./schemas/UntypedObjectArrayProperty.json"
-        title = "UntypedObjectArrayProperty"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectArrayProperty = {
-        schemaUrl = "./schemas/UntypedObjectArrayProperty.json"
-        title = "TaskUntypedObjectArrayProperty"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectArrayProperty = {
-        schemaUrl = "./schemas/UntypedObjectArrayProperty.json"
-        title = "FableUntypedObjectArrayProperty"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
-    let defaultUntypedObjectRequestBody = {
-        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
-        title = "UntypedObjectRequestBody"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectRequestBody = {
-        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
-        title = "TaskUntypedObjectRequestBody"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectRequestBody = {
-        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
-        title = "FableUntypedObjectRequestBody"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
-    let defaultUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "UntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let taskUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "TaskUntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "task"
-        target = "fsharp"
-        emptyDefinitions = "ignore"
-    }
-
-    let fableUntypedObjectNested = {
-        schemaUrl = "./schemas/UntypedObjectNested.json"
-        title = "FableUntypedObjectNested"
-        synchronous = false
-        asyncReturnType = "async"
-        target = "fable"
-        emptyDefinitions = "ignore"
-    }
-
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -694,18 +586,6 @@ let integrationKnownSchemas() =
         taskUnlimitedResponses
         syncUnlimitedResponses
         fableUnlimitedResponses
-        defaultUntypedObjectResponse
-        taskUntypedObjectResponse
-        fableUntypedObjectResponse
-        defaultUntypedObjectArrayProperty
-        taskUntypedObjectArrayProperty
-        fableUntypedObjectArrayProperty
-        defaultUntypedObjectRequestBody
-        taskUntypedObjectRequestBody
-        fableUntypedObjectRequestBody
-        defaultUntypedObjectNested
-        taskUntypedObjectNested
-        fableUntypedObjectNested
     ]
 
     for (index, schema) in List.indexed schemas do 

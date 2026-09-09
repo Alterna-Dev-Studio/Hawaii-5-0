@@ -489,7 +489,7 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///<summary>
     ///add a DICOM dataset to slicebox
     ///</summary>
-    member this.PostImages(?body: PostImagesPayload) =
+    member this.PostImages(?body: string) =
         async {
             let requestParts =
                 [ if body.IsSome then
@@ -763,7 +763,7 @@ type FableSliceboxClient(url: string, headers: list<Header>) =
     ///</summary>
     ///<param name="id">ID of session</param>
     ///<param name="body"></param>
-    member this.PostImportSessionsImagesById(id: int64, ?body: PostImportSessionsImagesByIdPayload) =
+    member this.PostImportSessionsImagesById(id: int64, ?body: string) =
         async {
             let requestParts =
                 [ RequestPart.path ("id", id)

@@ -598,7 +598,7 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<summary>
     ///add a DICOM dataset to slicebox
     ///</summary>
-    member this.PostImages(?cancellationToken: CancellationToken, ?body: PostImagesPayload) =
+    member this.PostImages(?cancellationToken: CancellationToken, ?body: string) =
         task {
             let requestParts =
                 [ if body.IsSome then
@@ -937,12 +937,7 @@ type TaskSliceboxClient(httpClient: HttpClient) =
     ///<param name="id">ID of session</param>
     ///<param name="cancellationToken"></param>
     ///<param name="body"></param>
-    member this.PostImportSessionsImagesById
-        (
-            id: int64,
-            ?cancellationToken: CancellationToken,
-            ?body: PostImportSessionsImagesByIdPayload
-        ) =
+    member this.PostImportSessionsImagesById(id: int64, ?cancellationToken: CancellationToken, ?body: string) =
         task {
             let requestParts =
                 [ RequestPart.path ("id", id)

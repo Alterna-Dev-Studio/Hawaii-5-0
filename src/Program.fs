@@ -899,7 +899,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
         let isObjectArray =
             propertyType.Type = "array"
             && isNotNull propertyType.Items
-            && isObjectSchema propertyType.Items
+            && propertyType.Items.Type = "object"
             && isNull propertyType.Items.Reference
             && isNotNull propertyType.Items.Properties
             && propertyType.Items.Properties.Count > 0
@@ -920,7 +920,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             && (isNull propertyType.AllOf || propertyType.AllOf.Count = 0)
             && (isNull propertyType.AnyOf || propertyType.AnyOf.Count = 0)
 
-        let isEmptyDefinition = isNull propertyType.Type && propertyType.Properties.Count = 0
+        let isEmptyDefinition = isNull propertyType.Type
 
         let isKeyValuePairObject =
             propertyType.Type = "object"
@@ -948,7 +948,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             && (isNull propertyType.Items.AnyOf || propertyType.Items.AnyOf.Count = 0)
 
         let isPrimitve = List.forall id [
-            (not (isObjectSchema propertyType) || not (isNull propertyType.Reference))
+            (propertyType.Type <> "object" || not (isNull propertyType.Reference))
             not isEnum
             not isObjectArray
             not isEnumArray
@@ -1047,7 +1047,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
                 Some fieldType
             | _ ->
                 None
-        else if isObjectSchema propertyType then
+        else if propertyType.Type = "object" then
             // handle nested objects
             let nestedPropertyNames =
                 propertyType.Properties
@@ -1418,7 +1418,7 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
             let valueType = getFieldType schema.AdditionalProperties status false
             let keyType = SynType.String()
             SynType.Map(keyType, valueType)
-        | _ when isObjectSchema schema ->
+        | "object" ->
             let recordName = $"{operationName}_{status}"
             visitedTypes.Add recordName
             let factory = FactoryFunction.None
@@ -1433,7 +1433,8 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
     let hasLoosePayloadRequestBody =
         isNotNull operation.RequestBody
         && operation.RequestBody.Content.ContainsKey MediaTypes.ApplicationJson
-        && isObjectSchema operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
+        && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
+        && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Type = "object"
         && isNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Reference
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Properties
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Properties.Count > 0
@@ -1453,7 +1454,8 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Type = "array"
         && isNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Reference
-        && isObjectSchema operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items
+        && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items
+        && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Type = "object"
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Properties
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Properties.Count > 0
 
@@ -1823,7 +1825,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                     // create type abbreviation
                     moduleTypes.Add (createTypeAbbreviation typeName (SynType.List(SynType.Bool())))
                     visitedTypes.Add typeName
-                elif isObjectSchema elementType && not (visitedTypes.Contains $"{typeName}ArrayItem") then
+                elif elementType.Type = "object" && not (visitedTypes.Contains $"{typeName}ArrayItem") then
                     let elementTypeName = $"{typeName}ArrayItem"
                     visitedTypes.Add typeName
                     visitedTypes.Add elementTypeName
@@ -1882,7 +1884,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
             elif isKeyValuePairObject then
                 // skip generating more key value pair type
                 ()
-            elif isObjectSchema topLevelObject.Value || isAllOf then
+            elif topLevelObject.Value.Type = "object" || isAllOf || (isNull topLevelObject.Value.Type && topLevelObject.Value.Properties.Count > 0) then
                 if not (visitedTypes.Contains typeName) then
                     visitedTypes.Add typeName
                     let factory = FactoryFunction.Create

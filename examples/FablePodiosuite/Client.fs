@@ -902,16 +902,10 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///General endpoint to send files
     ///</summary>
-    ///<param name="xAccessToken"></param>
-    ///<param name="file">The file to upload</param>
-    ///<param name="accountId">accountId</param>
-    member this.PostUpload(xAccessToken: string, file: File, ?accountId: string) =
+    member this.PostUpload(xAccessToken: string) =
         async {
             let requestParts =
-                [ RequestPart.header ("x-access-token", xAccessToken)
-                  RequestPart.multipartFormData ("file", file)
-                  if accountId.IsSome then
-                      RequestPart.multipartFormData ("accountId", accountId.Value) ]
+                [ RequestPart.header ("x-access-token", xAccessToken) ]
 
             let! (status, content) = OpenApiHttp.postAsync url "/upload" headers requestParts
             return PostUpload.OK
@@ -1998,12 +1992,9 @@ type FablePodiosuiteClient(url: string, headers: list<Header>) =
     ///<summary>
     ///Bulk updates of assets for name, group and custom attributes uploading a CSV file.
     ///</summary>
-    member this.PostBulkAssetsUpdateProcess(?file: File) =
+    member this.PostBulkAssetsUpdateProcess() =
         async {
-            let requestParts =
-                [ if file.IsSome then
-                      RequestPart.multipartFormData ("file", file.Value) ]
-
+            let requestParts = []
             let! (status, content) = OpenApiHttp.postAsync url "/bulk/assets/update/process" headers requestParts
             return PostBulkAssetsUpdateProcess.Accepted(Serializer.deserialize content)
         }

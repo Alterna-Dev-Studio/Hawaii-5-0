@@ -132,9 +132,3 @@ let isEmptySchema (schema: OpenApiSchema) =
         && schema.AllOf.Count = 0
         && schema.AnyOf.Count = 0
     )
-
-/// JSON Schema treats a schema that declares `properties` without an explicit
-/// `type` as object-shaped, so both forms must generate the same F# type.
-let isObjectSchema (schema: OpenApiSchema) =
-    isNotNull schema
-    && (schema.Type = "object" || (isNull schema.Type && schema.Properties.Count > 0))

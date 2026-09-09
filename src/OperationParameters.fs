@@ -75,7 +75,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
         SynType.Create typeName
     | "array" ->
         readParamType target schema.Items |> SynType.List
-    | _ when isObjectSchema schema ->
+    | "object" ->
         if isFSharpTarget target
         then SynType.JObject()
         else SynType.Object()
@@ -219,7 +219,7 @@ let private processOperationRequestBody
                 properties = []
             }]
 
-        elif content.ContainsKey "multipart/form-data" && isObjectSchema content.["multipart/form-data"].Schema then
+        elif content.ContainsKey "multipart/form-data" && isNotNull content.["multipart/form-data"].Schema && content.["multipart/form-data"].Schema.Type = "object" then
             content.["multipart/form-data"].Schema.Properties
             |> Seq.map (fun property ->
                 let parameterIdentifier = cleanParamIdent property.Key parameters
