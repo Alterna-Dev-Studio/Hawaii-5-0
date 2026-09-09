@@ -1,0 +1,126 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "UntypedObjectNested",
+    "version": "1.0",
+    "description": "Regression fixture for #34: untyped object schemas (properties without type) in nested record properties, top-level array components and multipart form bodies must keep their structure."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/profiles": {
+      "get": {
+        "summary": "Search profiles",
+        "operationId": "searchProfiles",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload a profile picture",
+        "operationId": "uploadProfilePicture",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "profileId": {
+                    "type": "string"
+                  },
+                  "picture": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "profileId",
+                  "picture"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "address": {
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "city"
+            ]
+          },
+          "metadata": {
+            "properties": {
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "address"
+        ]
+      },
+      "ProfileList": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      }
+    }
+  }
+}

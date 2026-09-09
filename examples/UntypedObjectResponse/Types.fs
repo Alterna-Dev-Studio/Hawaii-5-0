@@ -18,9 +18,11 @@ type TriggerEventResponseDto =
 type EventsControllerTrigger_Created =
     { data: Option<TriggerEventResponseDto> }
 
+type Details = { field: Option<string> }
+
 type EventsControllerTrigger_BadRequest =
     { message: string
-      details: Option<System.Text.Json.JsonElement> }
+      details: Option<Details> }
 
 [<RequireQualifiedAccess>]
 type EventsControllerTrigger =
