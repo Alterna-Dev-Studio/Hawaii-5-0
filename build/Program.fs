@@ -598,6 +598,33 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
+    let defaultUntypedObjectRequestBody = {
+        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
+        title = "UntypedObjectRequestBody"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let taskUntypedObjectRequestBody = {
+        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
+        title = "TaskUntypedObjectRequestBody"
+        synchronous = false
+        asyncReturnType = "task"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let fableUntypedObjectRequestBody = {
+        schemaUrl = "./schemas/UntypedObjectRequestBody.json"
+        title = "FableUntypedObjectRequestBody"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fable"
+        emptyDefinitions = "ignore"
+    }
+
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -646,6 +673,9 @@ let integrationKnownSchemas() =
         defaultUntypedObjectArrayProperty
         taskUntypedObjectArrayProperty
         fableUntypedObjectArrayProperty
+        defaultUntypedObjectRequestBody
+        taskUntypedObjectRequestBody
+        fableUntypedObjectRequestBody
     ]
 
     for (index, schema) in List.indexed schemas do 
