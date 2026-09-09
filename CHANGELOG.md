@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.71.1
+
+### Bug Fixes
+Schemas that declare `properties` without an explicit `type: "object"` are object-shaped per JSON Schema, but several code paths only recognised an explicit `type`. All of them now share one `isObjectSchema` predicate. Consumers should regenerate their clients.
+- Response payloads with an untyped object schema were typed as `string`, so the generated client threw `JsonException` on the success path at runtime ([#31](https://github.com/Alterna-Dev-Studio/Hawaii-5-0/issues/31)).
+- Record properties that were arrays of untyped inline objects were generated as `list<string>` and threw at runtime ([#32](https://github.com/Alterna-Dev-Studio/Hawaii-5-0/issues/32)).
+- Untyped inline request bodies were typed as `string` (or `list<string>`) instead of a `Payload` record, so the client sent a JSON string literal ([#33](https://github.com/Alterna-Dev-Studio/Hawaii-5-0/issues/33)).
+- Untyped object schemas in nested record properties, top-level array components and `multipart/form-data` bodies now keep their structure ([#34](https://github.com/Alterna-Dev-Studio/Hawaii-5-0/issues/34)).
+  - **Visible change**: nested fields that were previously `System.Text.Json.JsonElement` (or `obj` on Fable) are now typed nested records, and some generated nested type names change because more records participate in collision resolution. Multipart operations whose form schema was untyped gain their previously-missing parameters.
+- Regression fixtures for each case were added to the `generate-and-build` suite.
+
 ## v0.71.0
 
 ### Bug Fixes
