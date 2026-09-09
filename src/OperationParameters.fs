@@ -219,7 +219,7 @@ let private processOperationRequestBody
                 properties = []
             }]
 
-        elif content.ContainsKey "multipart/form-data" && isNotNull content.["multipart/form-data"].Schema && content.["multipart/form-data"].Schema.Type = "object" then
+        elif content.ContainsKey "multipart/form-data" && isObjectSchema content.["multipart/form-data"].Schema then
             content.["multipart/form-data"].Schema.Properties
             |> Seq.map (fun property ->
                 let parameterIdentifier = cleanParamIdent property.Key parameters

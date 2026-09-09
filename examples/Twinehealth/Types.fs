@@ -1340,9 +1340,19 @@ type QuestiondefinitionData =
     ///Creates an instance of QuestiondefinitionData with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): QuestiondefinitionData = { id = None; ``type`` = None }
 
+type QuestiondefinitionLinksLinks =
+    { related: Option<string> }
+    ///Creates an instance of QuestiondefinitionLinksLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): QuestiondefinitionLinksLinks = { related = None }
+
+type QuestiondefinitionLinks =
+    { links: Option<QuestiondefinitionLinksLinks> }
+    ///Creates an instance of QuestiondefinitionLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): QuestiondefinitionLinks = { links = None }
+
 type Questiondefinition =
     { data: Option<QuestiondefinitionData>
-      links: Option<System.Text.Json.JsonElement> }
+      links: Option<QuestiondefinitionLinks> }
     ///Creates an instance of Questiondefinition with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): Questiondefinition = { data = None; links = None }
 
@@ -1553,6 +1563,16 @@ type Identifier =
           system = system
           value = value }
 
+type OrganizationResourceAttributes =
+    { name: string }
+    ///Creates an instance of OrganizationResourceAttributes with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (name: string): OrganizationResourceAttributes = { name = name }
+
+type OrganizationResourceLinks =
+    { self: string }
+    ///Creates an instance of OrganizationResourceLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (self: string): OrganizationResourceLinks = { self = self }
+
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
 type OrganizationResourceType =
     | [<CompiledName "organization">] Organization
@@ -1561,12 +1581,12 @@ type OrganizationResourceType =
         | Organization -> "organization"
 
 type OrganizationResource =
-    { attributes: System.Text.Json.JsonElement
+    { attributes: OrganizationResourceAttributes
       id: string
-      links: Option<System.Text.Json.JsonElement>
+      links: Option<OrganizationResourceLinks>
       ``type``: OrganizationResourceType }
     ///Creates an instance of OrganizationResource with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (attributes: System.Text.Json.JsonElement, id: string, ``type``: OrganizationResourceType): OrganizationResource =
+    static member Create (attributes: OrganizationResourceAttributes, id: string, ``type``: OrganizationResourceType): OrganizationResource =
         { attributes = attributes
           id = id
           links = None
@@ -1641,20 +1661,6 @@ type PatientCreateResourceLinks =
     ///Creates an instance of PatientCreateResourceLinks with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientCreateResourceLinks = { self = None; twine_web_app = None }
 
-type PatientCreateResourceRelationships =
-    { coaches: Option<System.Text.Json.JsonElement>
-      groups: System.Text.Json.JsonElement }
-    ///Creates an instance of PatientCreateResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (groups: System.Text.Json.JsonElement): PatientCreateResourceRelationships =
-        { coaches = None; groups = groups }
-
-[<Fable.Core.StringEnum; RequireQualifiedAccess>]
-type PatientCreateResourceType =
-    | [<CompiledName "patient">] Patient
-    member this.Format() =
-        match this with
-        | Patient -> "patient"
-
 type CoachesDataMeta =
     { primary: Option<bool> }
     ///Creates an instance of CoachesDataMeta with all optional fields initialized to None. The required fields are parameters of this function
@@ -1677,11 +1683,81 @@ type CoachesData =
           meta = None
           ``type`` = ``type`` }
 
+type CoachesLinks =
+    { related: Option<string> }
+    ///Creates an instance of CoachesLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): CoachesLinks = { related = None }
+
 type Coaches =
     { data: list<CoachesData>
-      links: Option<System.Text.Json.JsonElement> }
+      links: Option<CoachesLinks> }
     ///Creates an instance of Coaches with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (data: list<CoachesData>): Coaches = { data = data; links = None }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type GroupsDataType =
+    | [<CompiledName "group">] Group
+    member this.Format() =
+        match this with
+        | Group -> "group"
+
+type GroupsData =
+    { id: Option<string>
+      ``type``: GroupsDataType }
+    ///Creates an instance of GroupsData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (``type``: GroupsDataType): GroupsData = { id = None; ``type`` = ``type`` }
+
+type Groups =
+    { data: list<GroupsData> }
+    ///Creates an instance of Groups with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<GroupsData>): Groups = { data = data }
+
+type PatientCreateResourceRelationships =
+    { coaches: Option<Coaches>
+      groups: Groups }
+    ///Creates an instance of PatientCreateResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (groups: Groups): PatientCreateResourceRelationships = { coaches = None; groups = groups }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type PatientCreateResourceType =
+    | [<CompiledName "patient">] Patient
+    member this.Format() =
+        match this with
+        | Patient -> "patient"
+
+type CoachesAndGroupsCoachesDataMeta =
+    { primary: Option<bool> }
+    ///Creates an instance of CoachesAndGroupsCoachesDataMeta with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): CoachesAndGroupsCoachesDataMeta = { primary = None }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type CoachesAndGroupsCoachesDataType =
+    | [<CompiledName "coach">] Coach
+    member this.Format() =
+        match this with
+        | Coach -> "coach"
+
+type CoachesAndGroupsCoachesData =
+    { id: string
+      meta: Option<CoachesAndGroupsCoachesDataMeta>
+      ``type``: CoachesAndGroupsCoachesDataType }
+    ///Creates an instance of CoachesAndGroupsCoachesData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (id: string, ``type``: CoachesAndGroupsCoachesDataType): CoachesAndGroupsCoachesData =
+        { id = id
+          meta = None
+          ``type`` = ``type`` }
+
+type CoachesAndGroupsCoachesLinks =
+    { related: Option<string> }
+    ///Creates an instance of CoachesAndGroupsCoachesLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): CoachesAndGroupsCoachesLinks = { related = None }
+
+type CoachesAndGroupsCoaches =
+    { data: list<CoachesAndGroupsCoachesData>
+      links: Option<CoachesAndGroupsCoachesLinks> }
+    ///Creates an instance of CoachesAndGroupsCoaches with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<CoachesAndGroupsCoachesData>): CoachesAndGroupsCoaches =
+        { data = data; links = None }
 
 ///1. If the query does not return any groups, a group with the specified name will be created and related to the patient.
 ///2. If the query returns one group, that group will be related to the patient.
@@ -1695,43 +1771,43 @@ type Query =
           organization = organization }
 
 ///Allows the specification of a query for a group rather than providing a group id directly
-type GroupsDataMeta =
+type CoachesAndGroupsGroupsDataMeta =
     { ///1. If the query does not return any groups, a group with the specified name will be created and related to the patient.
       ///2. If the query returns one group, that group will be related to the patient.
       ///3. If the query returns more than one group, the creation of the patient will fail.
       query: Query }
-    ///Creates an instance of GroupsDataMeta with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (query: Query): GroupsDataMeta = { query = query }
+    ///Creates an instance of CoachesAndGroupsGroupsDataMeta with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (query: Query): CoachesAndGroupsGroupsDataMeta = { query = query }
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
-type GroupsDataType =
+type CoachesAndGroupsGroupsDataType =
     | [<CompiledName "group">] Group
     member this.Format() =
         match this with
         | Group -> "group"
 
-type GroupsData =
+type CoachesAndGroupsGroupsData =
     { ///Required if the `meta.query` is not defined.
       id: Option<string>
       ///Allows the specification of a query for a group rather than providing a group id directly
-      meta: Option<GroupsDataMeta>
-      ``type``: GroupsDataType }
-    ///Creates an instance of GroupsData with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (``type``: GroupsDataType): GroupsData =
+      meta: Option<CoachesAndGroupsGroupsDataMeta>
+      ``type``: CoachesAndGroupsGroupsDataType }
+    ///Creates an instance of CoachesAndGroupsGroupsData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (``type``: CoachesAndGroupsGroupsDataType): CoachesAndGroupsGroupsData =
         { id = None
           meta = None
           ``type`` = ``type`` }
 
-type Groups =
-    { data: list<GroupsData> }
-    ///Creates an instance of Groups with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (data: list<GroupsData>): Groups = { data = data }
+type CoachesAndGroupsGroups =
+    { data: list<CoachesAndGroupsGroupsData> }
+    ///Creates an instance of CoachesAndGroupsGroups with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<CoachesAndGroupsGroupsData>): CoachesAndGroupsGroups = { data = data }
 
 type CoachesAndGroups =
-    { coaches: Option<Coaches>
-      groups: Groups }
+    { coaches: Option<CoachesAndGroupsCoaches>
+      groups: CoachesAndGroupsGroups }
     ///Creates an instance of CoachesAndGroups with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (groups: Groups): CoachesAndGroups = { coaches = None; groups = groups }
+    static member Create (groups: CoachesAndGroupsGroups): CoachesAndGroups = { coaches = None; groups = groups }
 
 type PatientCreateResource =
     { attributes: Option<PatientCreateResourceAttributes>
@@ -2557,11 +2633,65 @@ type PatientResourceLinks =
     ///Creates an instance of PatientResourceLinks with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): PatientResourceLinks = { self = None; twine_web_app = None }
 
+type PatientResourceRelationshipsCoachesDataMeta =
+    { primary: Option<bool> }
+    ///Creates an instance of PatientResourceRelationshipsCoachesDataMeta with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): PatientResourceRelationshipsCoachesDataMeta = { primary = None }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type PatientResourceRelationshipsCoachesDataType =
+    | [<CompiledName "coach">] Coach
+    member this.Format() =
+        match this with
+        | Coach -> "coach"
+
+type PatientResourceRelationshipsCoachesData =
+    { id: string
+      meta: Option<PatientResourceRelationshipsCoachesDataMeta>
+      ``type``: PatientResourceRelationshipsCoachesDataType }
+    ///Creates an instance of PatientResourceRelationshipsCoachesData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (id: string, ``type``: PatientResourceRelationshipsCoachesDataType): PatientResourceRelationshipsCoachesData =
+        { id = id
+          meta = None
+          ``type`` = ``type`` }
+
+type PatientResourceRelationshipsCoachesLinks =
+    { related: Option<string> }
+    ///Creates an instance of PatientResourceRelationshipsCoachesLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): PatientResourceRelationshipsCoachesLinks = { related = None }
+
+type PatientResourceRelationshipsCoaches =
+    { data: list<PatientResourceRelationshipsCoachesData>
+      links: Option<PatientResourceRelationshipsCoachesLinks> }
+    ///Creates an instance of PatientResourceRelationshipsCoaches with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<PatientResourceRelationshipsCoachesData>): PatientResourceRelationshipsCoaches =
+        { data = data; links = None }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type PatientResourceRelationshipsGroupsDataType =
+    | [<CompiledName "group">] Group
+    member this.Format() =
+        match this with
+        | Group -> "group"
+
+type PatientResourceRelationshipsGroupsData =
+    { id: Option<string>
+      ``type``: PatientResourceRelationshipsGroupsDataType }
+    ///Creates an instance of PatientResourceRelationshipsGroupsData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (``type``: PatientResourceRelationshipsGroupsDataType): PatientResourceRelationshipsGroupsData =
+        { id = None; ``type`` = ``type`` }
+
+type PatientResourceRelationshipsGroups =
+    { data: list<PatientResourceRelationshipsGroupsData> }
+    ///Creates an instance of PatientResourceRelationshipsGroups with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<PatientResourceRelationshipsGroupsData>): PatientResourceRelationshipsGroups =
+        { data = data }
+
 type PatientResourceRelationships =
-    { coaches: Option<System.Text.Json.JsonElement>
-      groups: System.Text.Json.JsonElement }
+    { coaches: Option<PatientResourceRelationshipsCoaches>
+      groups: PatientResourceRelationshipsGroups }
     ///Creates an instance of PatientResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (groups: System.Text.Json.JsonElement): PatientResourceRelationships =
+    static member Create (groups: PatientResourceRelationshipsGroups): PatientResourceRelationships =
         { coaches = None; groups = groups }
 
 [<Fable.Core.StringEnum; RequireQualifiedAccess>]
@@ -2995,9 +3125,80 @@ type RewardResource =
           relationships = None
           ``type`` = ``type`` }
 
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type Tokentype =
+    | [<CompiledName "bearer">] Bearer
+    member this.Format() =
+        match this with
+        | Bearer -> "bearer"
+
+type TokenResourceAttributes =
+    { access_token: string
+      expires_in: int
+      refresh_token: string
+      token_type: Tokentype }
+    ///Creates an instance of TokenResourceAttributes with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (access_token: string, expires_in: int, refresh_token: string, token_type: Tokentype): TokenResourceAttributes =
+        { access_token = access_token
+          expires_in = expires_in
+          refresh_token = refresh_token
+          token_type = token_type }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type TokenResourceRelationshipsGroupsDataType =
+    | [<CompiledName "group">] Group
+    member this.Format() =
+        match this with
+        | Group -> "group"
+
+type TokenResourceRelationshipsGroupsData =
+    { id: string
+      ``type``: TokenResourceRelationshipsGroupsDataType }
+    ///Creates an instance of TokenResourceRelationshipsGroupsData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (id: string, ``type``: TokenResourceRelationshipsGroupsDataType): TokenResourceRelationshipsGroupsData =
+        { id = id; ``type`` = ``type`` }
+
+type TokenResourceRelationshipsGroupsLinks =
+    { related: string }
+    ///Creates an instance of TokenResourceRelationshipsGroupsLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (related: string): TokenResourceRelationshipsGroupsLinks = { related = related }
+
+type TokenResourceRelationshipsGroups =
+    { data: list<TokenResourceRelationshipsGroupsData>
+      links: TokenResourceRelationshipsGroupsLinks }
+    ///Creates an instance of TokenResourceRelationshipsGroups with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: list<TokenResourceRelationshipsGroupsData>, links: TokenResourceRelationshipsGroupsLinks): TokenResourceRelationshipsGroups =
+        { data = data; links = links }
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type OrganizationDataType =
+    | [<CompiledName "organization">] Organization
+    member this.Format() =
+        match this with
+        | Organization -> "organization"
+
+type OrganizationData =
+    { id: string
+      ``type``: OrganizationDataType }
+    ///Creates an instance of OrganizationData with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (id: string, ``type``: OrganizationDataType): OrganizationData =
+        { id = id; ``type`` = ``type`` }
+
+type OrganizationLinks =
+    { related: string }
+    ///Creates an instance of OrganizationLinks with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (related: string): OrganizationLinks = { related = related }
+
+type Organization =
+    { data: OrganizationData
+      links: OrganizationLinks }
+    ///Creates an instance of Organization with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (data: OrganizationData, links: OrganizationLinks): Organization =
+        { data = data; links = links }
+
 type TokenResourceRelationships =
-    { groups: Option<System.Text.Json.JsonElement>
-      organization: Option<System.Text.Json.JsonElement> }
+    { groups: Option<TokenResourceRelationshipsGroups>
+      organization: Option<Organization> }
     ///Creates an instance of TokenResourceRelationships with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): TokenResourceRelationships = { groups = None; organization = None }
 
@@ -3009,7 +3210,7 @@ type TokenResourceType =
         | Token -> "token"
 
 type TokenResource =
-    { attributes: Option<System.Text.Json.JsonElement>
+    { attributes: Option<TokenResourceAttributes>
       id: string
       relationships: Option<TokenResourceRelationships>
       ``type``: TokenResourceType }
