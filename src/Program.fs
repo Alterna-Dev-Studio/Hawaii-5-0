@@ -899,7 +899,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
         let isObjectArray =
             propertyType.Type = "array"
             && isNotNull propertyType.Items
-            && propertyType.Items.Type = "object"
+            && isObjectSchema propertyType.Items
             && isNull propertyType.Items.Reference
             && isNotNull propertyType.Items.Properties
             && propertyType.Items.Properties.Count > 0

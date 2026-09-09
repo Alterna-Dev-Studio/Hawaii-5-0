@@ -427,6 +427,20 @@ type AccountSecuritySettingType =
         | Vpn_acl -> "vpn_acl"
         | Destined_ip_range -> "destined_ip_range"
 
+type Ranges =
+    { address: Option<string>
+      netmask: Option<float>
+      hostMin: Option<float>
+      hostMax: Option<float>
+      usableHosts: Option<float> }
+    ///Creates an instance of Ranges with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): Ranges =
+        { address = None
+          netmask = None
+          hostMin = None
+          hostMax = None
+          usableHosts = None }
+
 type AccountSecuritySetting =
     { poolId: Option<string>
       ///Security Service Name
@@ -435,7 +449,7 @@ type AccountSecuritySetting =
       ``type``: Option<AccountSecuritySettingType>
       ///Network type
       carrier: Option<string>
-      ranges: Option<list<string>> }
+      ranges: Option<list<Ranges>> }
     ///Creates an instance of AccountSecuritySetting with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): AccountSecuritySetting =
         { poolId = None
@@ -631,8 +645,74 @@ type Carriers =
           ROPE = None
           TEST = None }
 
+type DfProducts =
+    { DataPoolProduct: Option<string>
+      PerMbProduct: Option<string> }
+    ///Creates an instance of DfProducts with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): DfProducts =
+        { DataPoolProduct = None
+          PerMbProduct = None }
+
+type Bundles =
+    { dfProducts: Option<DfProducts>
+      bundleId: Option<string>
+      localProductId: Option<string>
+      localProductName: Option<string>
+      sharedDataPoolId: Option<string>
+      initialSize: Option<float>
+      remainingBytes: Option<float>
+      preactivationInitialBytes: Option<float>
+      preactivationRemainingBytes: Option<float>
+      preactivationInitialSms: Option<float>
+      preactivationRemainingSms: Option<float>
+      preactivationInitialVoice: Option<float>
+      preactivationRemainingVoice: Option<float>
+      dataUsed: Option<float>
+      startTime: Option<string>
+      endTime: Option<string>
+      cost: Option<float>
+      remainingCredit: Option<float>
+      creditUsed: Option<float>
+      perMbCost: Option<float>
+      ``type``: Option<string>
+      smsInitialSize: Option<float>
+      remainingSms: Option<float>
+      proratedSms: Option<float>
+      smsUsed: Option<float>
+      smsCreditUsed: Option<float>
+      smsCost: Option<float> }
+    ///Creates an instance of Bundles with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): Bundles =
+        { dfProducts = None
+          bundleId = None
+          localProductId = None
+          localProductName = None
+          sharedDataPoolId = None
+          initialSize = None
+          remainingBytes = None
+          preactivationInitialBytes = None
+          preactivationRemainingBytes = None
+          preactivationInitialSms = None
+          preactivationRemainingSms = None
+          preactivationInitialVoice = None
+          preactivationRemainingVoice = None
+          dataUsed = None
+          startTime = None
+          endTime = None
+          cost = None
+          remainingCredit = None
+          creditUsed = None
+          perMbCost = None
+          ``type`` = None
+          smsInitialSize = None
+          remainingSms = None
+          proratedSms = None
+          smsUsed = None
+          smsCreditUsed = None
+          smsCost = None }
+
 type Subscriptions =
-    { bundles: Option<list<string>>
+    { bundles: Option<list<Bundles>>
       id: Option<string>
       accountId: Option<string>
       limit: Option<float>
@@ -1148,9 +1228,19 @@ type ProductCarriers =
           ROPE = None
           TEST = None }
 
+type Zones =
+    { zoneId: Option<string>
+      active: Option<bool>
+      cost: Option<float> }
+    ///Creates an instance of Zones with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): Zones =
+        { zoneId = None
+          active = None
+          cost = None }
+
 type ProductZoneSetup =
     { schemeId: Option<string>
-      zones: Option<list<string>> }
+      zones: Option<list<Zones>> }
     ///Creates an instance of ProductZoneSetup with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): ProductZoneSetup = { schemeId = None; zones = None }
 
@@ -1407,9 +1497,19 @@ type ProductNoBundleIdCarriers =
           ROPE = None
           TEST = None }
 
+type ProductNoBundleIdProductZoneSetupZones =
+    { zoneId: Option<string>
+      active: Option<bool>
+      cost: Option<float> }
+    ///Creates an instance of ProductNoBundleIdProductZoneSetupZones with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): ProductNoBundleIdProductZoneSetupZones =
+        { zoneId = None
+          active = None
+          cost = None }
+
 type ProductNoBundleIdProductZoneSetup =
     { schemeId: Option<string>
-      zones: Option<list<string>> }
+      zones: Option<list<ProductNoBundleIdProductZoneSetupZones>> }
     ///Creates an instance of ProductNoBundleIdProductZoneSetup with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (): ProductNoBundleIdProductZoneSetup = { schemeId = None; zones = None }
 
@@ -1804,19 +1904,25 @@ type PostAuthChangePassword =
     ///Internal error.
     | InternalServerError of payload: Internal
 
+type PostUsersPayloadPermissions =
+    { accountId: Option<string>
+      roles: Option<list<string>> }
+    ///Creates an instance of PostUsersPayloadPermissions with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): PostUsersPayloadPermissions = { accountId = None; roles = None }
+
 type PostUsersPayload =
     { accountId: string
       username: string
       password: string
       email: string
       status: Option<string>
-      permissions: list<string> }
+      permissions: list<PostUsersPayloadPermissions> }
     ///Creates an instance of PostUsersPayload with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (accountId: string,
                           username: string,
                           password: string,
                           email: string,
-                          permissions: list<string>): PostUsersPayload =
+                          permissions: list<PostUsersPayloadPermissions>): PostUsersPayload =
         { accountId = accountId
           username = username
           password = password
@@ -2395,11 +2501,48 @@ type GetAccountsProductsByAccountId =
     ///Internal error.
     | InternalServerError of payload: Internal
 
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type PutAccountsProductsAlertsPayloadAlertsType =
+    | [<CompiledName "in_cost">] In_cost
+    | [<CompiledName "in_percent">] In_percent
+    | [<CompiledName "out_cost">] Out_cost
+    | [<CompiledName "out_percent">] Out_percent
+    member this.Format() =
+        match this with
+        | In_cost -> "in_cost"
+        | In_percent -> "in_percent"
+        | Out_cost -> "out_cost"
+        | Out_percent -> "out_percent"
+
+[<Fable.Core.StringEnum; RequireQualifiedAccess>]
+type Notification =
+    | [<CompiledName "desktop">] Desktop
+    | [<CompiledName "email_default">] Email_default
+    | [<CompiledName "email_alternative">] Email_alternative
+    member this.Format() =
+        match this with
+        | Desktop -> "desktop"
+        | Email_default -> "email_default"
+        | Email_alternative -> "email_alternative"
+
+type PutAccountsProductsAlertsPayloadAlerts =
+    { ///Alert type.
+      ``type``: Option<PutAccountsProductsAlertsPayloadAlertsType>
+      ///Notification type.
+      notification: Option<Notification>
+      ///Limit value.
+      limit: Option<float> }
+    ///Creates an instance of PutAccountsProductsAlertsPayloadAlerts with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): PutAccountsProductsAlertsPayloadAlerts =
+        { ``type`` = None
+          notification = None
+          limit = None }
+
 type PutAccountsProductsAlertsPayload =
     { accountId: string
       productId: string
       alternativeEmail: Option<string>
-      alerts: Option<list<string>> }
+      alerts: Option<list<PutAccountsProductsAlertsPayloadAlerts>> }
     ///Creates an instance of PutAccountsProductsAlertsPayload with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (accountId: string, productId: string): PutAccountsProductsAlertsPayload =
         { accountId = accountId
@@ -3186,7 +3329,7 @@ type PostAssetsTagsByIccid =
     ///Internal error
     | InternalServerError
 
-type DfProducts =
+type ProvisioningSubscriptionsBundlesDfProducts =
     { DataPoolProduct: Option<string>
       PerMbProduct: Option<string>
       SharedDataPoolProduct: Option<string>
@@ -3195,8 +3338,8 @@ type DfProducts =
       PerSecondProduct: Option<string>
       VoicePoolProduct: Option<string> }
 
-type Bundles =
-    { dfProducts: Option<DfProducts>
+type ProvisioningSubscriptionsBundles =
+    { dfProducts: Option<ProvisioningSubscriptionsBundlesDfProducts>
       bundleId: Option<string>
       localProductId: Option<string>
       localProductName: Option<string>
@@ -3212,7 +3355,7 @@ type Bundles =
       ``type``: Option<string> }
 
 type ProvisioningSubscriptions =
-    { bundles: Option<list<Bundles>>
+    { bundles: Option<list<ProvisioningSubscriptionsBundles>>
       accoundtId: Option<string>
       id: Option<string>
       limit: Option<float> }
@@ -3230,6 +3373,11 @@ type ProvisioningLastCall =
       bytes: Option<float>
       roundedBytes: Option<float> }
 
+type ProvisioningSetups =
+    { alerts: Option<list<string>>
+      accountId: Option<string>
+      assetName: Option<string> }
+
 type Provisioning =
     { id: Option<string>
       iccid: Option<string>
@@ -3240,7 +3388,7 @@ type Provisioning =
       subscriptions: Option<list<ProvisioningSubscriptions>>
       activationDate: Option<string>
       lastCall: Option<ProvisioningLastCall>
-      setups: Option<list<string>>
+      setups: Option<list<ProvisioningSetups>>
       ownership: Option<list<string>> }
 
 type NetworkServices =
@@ -3331,6 +3479,10 @@ type GetAssetsLocationByIccid =
     ///Internal error
     | InternalServerError of payload: Internal
 
+type Usage =
+    { timestamp: Option<string>
+      bytes: Option<float> }
+
 type GetAssetsSessionsByIccid_OK =
     { id: Option<string>
       iccid: Option<string>
@@ -3348,7 +3500,7 @@ type GetAssetsSessionsByIccid_OK =
       homeNetworkMnc: Option<float>
       startTime: Option<string>
       quota: Option<float>
-      usage: Option<list<string>> }
+      usage: Option<list<Usage>> }
 
 [<RequireQualifiedAccess>]
 type GetAssetsSessionsByIccid =
