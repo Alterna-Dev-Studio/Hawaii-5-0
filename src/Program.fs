@@ -226,16 +226,37 @@ let simplifyRedundantSchemaParts (schema: Nodes.JsonObject) =
                 part.Add("application/json", mediaType.DeepClone())
                 part.Remove(kvp.Key) |> ignore
             elif kvp.Key = "anyOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
-                // simplify this shape
-                // { anyOf: [ first ] }
-                // into
-                // { ...first }
                 let anyOfArray = kvp.Value.AsArray()
                 if anyOfArray.Count = 1 && anyOfArray.[0] <> null && anyOfArray.[0].GetValueKind() = JsonValueKind.Object then
+                    // simplify { anyOf: [ first ] } into { ...first }
                     let innerObject = anyOfArray.[0].AsObject()
                     for innerProp in innerObject do
                         part.Add(innerProp.Key, innerProp.Value.DeepClone())
                     part.Remove("anyOf") |> ignore
+                elif anyOfArray.Count = 2 then
+                    // simplify { anyOf: [{type: T}, {nullable: true}] } into { ...T, nullable: true }
+                    // This is the OpenAPI 3.1 nullable pattern
+                    let isNullableEntry (node: Nodes.JsonNode) =
+                        node <> null
+                        && node.GetValueKind() = JsonValueKind.Object
+                        && let obj = node.AsObject()
+                           in obj.Count = 1 && obj.ContainsKey("nullable")
+                    let isTypedEntry (node: Nodes.JsonNode) =
+                        node <> null && node.GetValueKind() = JsonValueKind.Object
+                    if isNullableEntry anyOfArray.[1] && isTypedEntry anyOfArray.[0] then
+                        let innerObject = anyOfArray.[0].AsObject()
+                        for innerProp in innerObject do
+                            part.Add(innerProp.Key, innerProp.Value.DeepClone())
+                        if not (part.ContainsKey "nullable") then
+                            part.Add("nullable", Nodes.JsonValue.Create(true))
+                        part.Remove("anyOf") |> ignore
+                    elif isNullableEntry anyOfArray.[0] && isTypedEntry anyOfArray.[1] then
+                        let innerObject = anyOfArray.[1].AsObject()
+                        for innerProp in innerObject do
+                            part.Add(innerProp.Key, innerProp.Value.DeepClone())
+                        if not (part.ContainsKey "nullable") then
+                            part.Add("nullable", Nodes.JsonValue.Create(true))
+                        part.Remove("anyOf") |> ignore
             elif kvp.Key = "oneOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
                 // simplify this shape
                 // { oneOf: [ first ] }
@@ -628,6 +649,27 @@ let (|IntEnum|_|) (typeName: string) (schema: OpenApiSchema) =
     else
         None
 
+[<RequireQualifiedAccess>]
+type UnionVariant =
+    | Ref of typeName: string
+    | Primitive of primitiveType: string * format: string option
+    | InlineObject of schema: OpenApiSchema
+    | Unsupported
+
+let classifyAnyOfOneOf (schemas: IList<OpenApiSchema>) : UnionVariant list =
+    schemas
+    |> Seq.map (fun s ->
+        if not (isNull s.Reference) then
+            UnionVariant.Ref (sanitizeTypeName s.Reference.Id)
+        elif s.Type = "string" || s.Type = "number" || s.Type = "integer" || s.Type = "boolean" then
+            UnionVariant.Primitive (s.Type, if isNull s.Format then None else Some s.Format)
+        elif s.Type = "object" && s.Properties.Count > 0 then
+            UnionVariant.InlineObject s
+        else
+            UnionVariant.Unsupported
+    )
+    |> Seq.toList
+
 let rec createFieldType recordName required (propertyName: string) (propertySchema: OpenApiSchema) (config: CodegenConfig) =
     if not required then
         let optionalType : SynType = createFieldType recordName true propertyName propertySchema config
@@ -643,6 +685,9 @@ let rec createFieldType recordName required (propertyName: string) (propertySche
             then sanitizeTypeName propertySchema.Reference.Id
             else sanitizeTypeName propertySchema.Title
         SynType.Create typeName
+    elif propertySchema.OneOf.Count > 1 || propertySchema.AnyOf.Count > 1 then
+        let unionName = sanitizeTypeName (recordName + capitalize propertyName)
+        SynType.Create unionName
     else
         match propertySchema.Type with
         | "integer" when propertySchema.Format = "int64" -> SynType.Int64()
@@ -761,7 +806,71 @@ let createEnumType (enumName: string) (values: seq<string>) (docs: string option
 
     SynModuleDecl.CreateSimpleType(info, simpleType, members)
 
+let mapPrimitiveToSynType (primType: string) (format: string option) =
+    match primType, format with
+    | "integer", Some "int64" -> SynType.Int64()
+    | "integer", _ -> SynType.Int()
+    | "number", Some "float" -> SynType.Float32()
+    | "number", _ -> SynType.Double()
+    | "boolean", _ -> SynType.Bool()
+    | "string", Some "uuid" | "string", Some "guid" -> SynType.Guid()
+    | "string", Some "date-time" -> SynType.DateTimeOffset()
+    | "string", Some "byte" -> SynType.ByteArray()
+    | "string", _ -> SynType.String()
+    | _ -> SynType.String()
 
+let primitiveCaseName (primType: string) (format: string option) =
+    match primType, format with
+    | "integer", Some "int64" -> "Int64"
+    | "integer", _ -> "Int"
+    | "number", Some "float" -> "Float32"
+    | "number", _ -> "Double"
+    | "boolean", _ -> "Bool"
+    | "string", Some "uuid" | "string", Some "guid" -> "Guid"
+    | "string", Some "date-time" -> "DateTimeOffset"
+    | "string", Some "byte" -> "ByteArray"
+    | "string", _ -> "String"
+    | _ -> "String"
+
+let createUnionType (unionName: string) (variants: UnionVariant list) (docs: string option) : SynModuleDecl =
+    let info : SynComponentInfoRcd = {
+        Access = None
+        Attributes = [
+            SynAttributeList.Create [
+                SynAttribute.RequireQualifiedAccess()
+            ]
+        ]
+        Id = [ Ident.Create unionName ]
+        XmlDoc =
+            match docs with
+            | None -> PreXmlDoc.Empty
+            | Some value -> xmlDocs value
+        Parameters = [ ]
+        Constraints = [ ]
+        PreferPostfix = false
+        Range = range0
+    }
+
+    let cases = [
+        for variant in variants do
+            match variant with
+            | UnionVariant.Ref typeName ->
+                let field = SynFieldRcd.Create("value", SynType.Create typeName)
+                SynUnionCase.UnionCase([], Ident.Create typeName,
+                    SynUnionCaseType.UnionCaseFields [field.FromRcd], PreXmlDoc.Empty, None, range0)
+            | UnionVariant.Primitive (primType, format) ->
+                let synType = mapPrimitiveToSynType primType format
+                let caseName = primitiveCaseName primType format
+                let field = SynFieldRcd.Create("value", synType)
+                SynUnionCase.UnionCase([], Ident.Create caseName,
+                    SynUnionCaseType.UnionCaseFields [field.FromRcd], PreXmlDoc.Empty, None, range0)
+            | UnionVariant.InlineObject _
+            | UnionVariant.Unsupported -> ()
+    ]
+
+    let enumRepresentation = SynTypeDefnSimpleReprUnionRcd.Create(cases)
+    let simpleType = SynTypeDefnSimpleReprRcd.Union(enumRepresentation)
+    SynModuleDecl.CreateSimpleType(info, simpleType, [])
 
 let statusCode = function
     | "200" -> Some (nameof HttpStatusCode.OK)
@@ -959,6 +1068,9 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             not isArrayOfEmptyObject
         ]
 
+        let isAnyOfOneOf =
+            propertyType.OneOf.Count > 1 || propertyType.AnyOf.Count > 1
+
         if propertyType.Deprecated then
             // skip deprecated propertie
             None
@@ -970,6 +1082,43 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
             | false, true -> SynType.Option(SynType.Map(SynType.String(), SynType.Option(fieldType)))
             | true, true -> SynType.Map(SynType.String(), SynType.Option(fieldType))
             |> Some
+        elif isAnyOfOneOf then
+            let schemas =
+                if propertyType.OneOf.Count > 1 then propertyType.OneOf :> IList<OpenApiSchema>
+                else propertyType.AnyOf :> IList<OpenApiSchema>
+            let variants = classifyAnyOfOneOf schemas
+            // Resolve InlineObject variants: generate nested records and convert to Ref variants
+            let resolvedVariants =
+                variants |> List.mapi (fun i variant ->
+                    match variant with
+                    | UnionVariant.InlineObject inlineSchema ->
+                        let inlineTypeName = sanitizeTypeName (recordName + capitalize propertyName + "Case" + string (i + 1))
+                        if not (visitedTypes.Contains inlineTypeName) then
+                            visitedTypes.Add inlineTypeName
+                            let nestedRecord = createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory
+                            nestedObjects.AddRange nestedRecord
+                        UnionVariant.Ref inlineTypeName
+                    | other -> other
+                )
+            let hasSupported = resolvedVariants |> List.exists (fun v -> v <> UnionVariant.Unsupported)
+            if hasSupported then
+                let unionName = sanitizeTypeName (recordName + capitalize propertyName)
+                if not (visitedTypes.Contains unionName) then
+                    visitedTypes.Add unionName
+                    nestedObjects.Add (createUnionType unionName resolvedVariants None)
+                let fieldType =
+                    if required
+                    then SynType.Create unionName
+                    else SynType.Option(SynType.Create unionName)
+                Some fieldType
+            else
+                // fallback to JsonElement for unsupported variants
+                let fieldType =
+                    if required then
+                        if isFSharpTarget config.target then SynType.JToken() else SynType.Object()
+                    else
+                        if isFSharpTarget config.target then SynType.Option(SynType.JToken()) else SynType.Option(SynType.Object())
+                Some fieldType
         elif isPrimitve then
             let fieldType = createFieldType recordName required propertyName propertyType config
             Some fieldType
@@ -1890,6 +2039,31 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                     let factory = FactoryFunction.Create
                     for createdType in createRecordFromSchema typeName topLevelObject.Value visitedTypes config openApiDocument factory do
                         moduleTypes.Add createdType
+            elif not (visitedTypes.Contains typeName) then
+                let schemas =
+                    if topLevelObject.Value.OneOf.Count > 1 then topLevelObject.Value.OneOf :> IList<OpenApiSchema>
+                    elif topLevelObject.Value.AnyOf.Count > 1 then topLevelObject.Value.AnyOf :> IList<OpenApiSchema>
+                    else null
+                if isNotNull schemas then
+                    let variants = classifyAnyOfOneOf schemas
+                    let resolvedVariants =
+                        variants |> List.mapi (fun i variant ->
+                            match variant with
+                            | UnionVariant.InlineObject inlineSchema ->
+                                let inlineTypeName = sanitizeTypeName (typeName + "Case" + string (i + 1))
+                                if not (visitedTypes.Contains inlineTypeName) then
+                                    visitedTypes.Add inlineTypeName
+                                    let factory = FactoryFunction.Create
+                                    let nestedRecord = createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory
+                                    for decl in nestedRecord do
+                                        moduleTypes.Add decl
+                                UnionVariant.Ref inlineTypeName
+                            | other -> other
+                        )
+                    let hasSupported = resolvedVariants |> List.exists (fun v -> v <> UnionVariant.Unsupported)
+                    if hasSupported then
+                        visitedTypes.Add typeName
+                        moduleTypes.Add (createUnionType typeName resolvedVariants (Some topLevelObject.Value.Description))
             else
                 ()
 
