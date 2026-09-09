@@ -49,7 +49,8 @@ Create a configuration file called `hawaii.json` with the following shape:
     ["resolveReferences"]: <true | false>,
     ["emptyDefinitions"]: <"ignore" | "free-form">,
     ["overrideSchema"]: <JSON schema subset>,
-    ["filterTags"]: <list of tags>
+    ["filterTags"]: <list of tags>,
+    ["unionStrategy"]: <"discriminated-union" | "json-element">
 }
 ```
 Where
@@ -63,6 +64,7 @@ Where
  - `<emptyDefintions>` determines what hawaii should do when encountering a global type definition without schema information. When set to "ignore" (default) hawaii will generate the global type. However, sometimes these global types are still referenced from other types or definitions, in which case the setting this option to "free-form" will generate a type abbreviation for the empty schema equal to a free form object (`JToken` when targetting F# or `obj` when targetting Fable)
  - `<overrideSchema>` Allows you to override the resolved schema either to add more information (such as a missing operation ID) or _correct_ the types when you know better (see below)
  - `<filterTags>` Allows to filter which operations will be included based on their OpenAPI tags. Useful when generating the full schema isn't possible or isn't practical. To see what tags are available, use `hawaii5o --show-tags`
+ - `<unionStrategy>` Controls how multi-element `anyOf`/`oneOf` schemas are represented. When set to `"discriminated-union"` (default), hawaii generates F# discriminated unions with typed cases. When set to `"json-element"`, falls back to `JsonElement` (pre-v0.80 behavior)
 
 ### Example ([PetStore](https://petstore3.swagger.io) Schema)
 Here is an example configuration for the pet store API:
@@ -226,7 +228,7 @@ You can go a step further by overriding the return types of certain responses. T
 
 ### Limitations
 These are the very early days of Hawaii as a tool to generate F# clients and there are some known limitations and rough edges that I will be working on:
- - `anyOf`/`oneOf` not supported unless they contain a single element, in which case they are reduced away
+ - `anyOf`/`oneOf` with multiple elements generates F# discriminated unions. Set `"unionStrategy": "json-element"` in `hawaii.json` to fall back to `JsonElement` (pre-v0.80 behavior)
 
 > You can watch the live coding sessions as a playlist published on [YouTube here](https://www.youtube.com/watch?v=8dgjD6vG7yw&list=PLBzGkJMamtz0KCkK7OFnuXyXP7yUtnt9o)
 
