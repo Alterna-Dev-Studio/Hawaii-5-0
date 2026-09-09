@@ -1433,7 +1433,8 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
     let hasLoosePayloadRequestBody =
         isNotNull operation.RequestBody
         && operation.RequestBody.Content.ContainsKey MediaTypes.ApplicationJson
-        && isObjectSchema operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
+        && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
+        && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Type = "object"
         && isNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Reference
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Properties
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Properties.Count > 0
@@ -1453,7 +1454,8 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Type = "array"
         && isNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Reference
-        && isObjectSchema operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items
+        && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items
+        && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Type = "object"
         && isNotNull operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Properties
         && operation.RequestBody.Content.[MediaTypes.ApplicationJson].Schema.Items.Properties.Count > 0
 

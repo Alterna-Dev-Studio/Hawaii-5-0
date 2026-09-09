@@ -75,7 +75,7 @@ let rec private readParamType (target: Target) (schema: OpenApiSchema) : SynType
         SynType.Create typeName
     | "array" ->
         readParamType target schema.Items |> SynType.List
-    | _ when isObjectSchema schema ->
+    | "object" ->
         if isFSharpTarget target
         then SynType.JObject()
         else SynType.Object()
