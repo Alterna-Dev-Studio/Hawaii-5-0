@@ -1418,7 +1418,7 @@ let createResponseType (operation: OpenApiOperation) (path: string) (operationTy
             let valueType = getFieldType schema.AdditionalProperties status false
             let keyType = SynType.String()
             SynType.Map(keyType, valueType)
-        | "object" ->
+        | _ when isObjectSchema schema ->
             let recordName = $"{operationName}_{status}"
             visitedTypes.Add recordName
             let factory = FactoryFunction.None
@@ -1884,7 +1884,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
             elif isKeyValuePairObject then
                 // skip generating more key value pair type
                 ()
-            elif topLevelObject.Value.Type = "object" || isAllOf || (isNull topLevelObject.Value.Type && topLevelObject.Value.Properties.Count > 0) then
+            elif isObjectSchema topLevelObject.Value || isAllOf then
                 if not (visitedTypes.Contains typeName) then
                     visitedTypes.Add typeName
                     let factory = FactoryFunction.Create
