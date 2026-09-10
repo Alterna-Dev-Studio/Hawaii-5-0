@@ -628,6 +628,27 @@ let (|IntEnum|_|) (typeName: string) (schema: OpenApiSchema) =
     else
         None
 
+[<RequireQualifiedAccess>]
+type UnionVariant =
+    | Ref of typeName: string
+    | Primitive of primitiveType: string * format: string option
+    | InlineObject of schema: OpenApiSchema
+    | Unsupported
+
+let classifyAnyOfOneOf (schemas: IList<OpenApiSchema>) : UnionVariant list =
+    schemas
+    |> Seq.map (fun s ->
+        if not (isNull s.Reference) then
+            UnionVariant.Ref (referencedSchemaTypeName s)
+        elif s.Type = "string" || s.Type = "number" || s.Type = "integer" || s.Type = "boolean" then
+            UnionVariant.Primitive (s.Type, if isNull s.Format then None else Some s.Format)
+        elif (isNull s.Type || s.Type = "object") && not (isNull s.Properties) && s.Properties.Count > 0 then
+            UnionVariant.InlineObject s
+        else
+            UnionVariant.Unsupported
+    )
+    |> Seq.toList
+
 let rec createFieldType recordName required (propertyName: string) (propertySchema: OpenApiSchema) (config: CodegenConfig) =
     if not required then
         let optionalType : SynType = createFieldType recordName true propertyName propertySchema config
@@ -638,11 +659,7 @@ let rec createFieldType recordName required (propertyName: string) (propertySche
         else SynType.Object()
     elif not (isNull propertySchema.Reference) then
         // working with a reference type
-        let typeName =
-            if invalidTitle propertySchema.Title
-            then sanitizeTypeName propertySchema.Reference.Id
-            else sanitizeTypeName propertySchema.Title
-        SynType.Create typeName
+        SynType.Create (referencedSchemaTypeName propertySchema)
     else
         match propertySchema.Type with
         | "integer" when propertySchema.Format = "int64" -> SynType.Int64()

@@ -124,13 +124,22 @@ let invalidTitle (title: string) =
     || (title.Contains "Mediatype identifier" && title.Contains "application/")
     || (title.Split(' ').Length >= 1)
 
+/// Derives the F# type name for a schema reference, preferring a valid
+/// `schema.Title` over `Reference.Id` -- the same precedence used
+/// throughout the generator wherever a reference type is named.
+let referencedSchemaTypeName (schema: OpenApiSchema) =
+    if invalidTitle schema.Title
+    then sanitizeTypeName schema.Reference.Id
+    else sanitizeTypeName schema.Title
+
 let isEmptySchema (schema: OpenApiSchema) =
     isNull schema
     || (
         (isNull schema.Type || schema.Type = "object")
-        && schema.Properties.Count = 0
-        && schema.AllOf.Count = 0
-        && schema.AnyOf.Count = 0
+        && (isNull schema.Properties || schema.Properties.Count = 0)
+        && (isNull schema.AllOf || schema.AllOf.Count = 0)
+        && (isNull schema.AnyOf || schema.AnyOf.Count = 0)
+        && (isNull schema.OneOf || schema.OneOf.Count = 0)
     )
 
 /// JSON Schema treats a schema that declares `properties` without an explicit
