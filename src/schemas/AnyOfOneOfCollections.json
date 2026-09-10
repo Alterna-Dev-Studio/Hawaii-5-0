@@ -1,0 +1,228 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AnyOfOneOfCollections",
+    "version": "1.0",
+    "description": "Regression fixture for PR 13: array `items` and `additionalProperties` schemas that are themselves multi-element oneOf/anyOf must generate (or safely fall back from) a discriminated union, not a reference to an undeclared type. Also covers the fallback path when a variant is an inline object or an unsupported schema, top-level oneOf schemas that become module-level DUs or type abbreviations, required collections of unions, and union case-name deduplication/merging."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/baskets/{id}": {
+      "get": {
+        "summary": "Get a basket",
+        "operationId": "getBasket",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Basket"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Point": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      },
+      "Label": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "Shape": {
+        "description": "A shape is either a point or a label. Every variant is a reference, so this becomes a real discriminated union.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Point"
+          },
+          {
+            "$ref": "#/components/schemas/Label"
+          }
+        ]
+      },
+      "LooseShape": {
+        "description": "A shape whose second variant is an inline object, so the whole type falls back to a free-form JSON value.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Point"
+          },
+          {
+            "properties": {
+              "kind": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Basket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "markers": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Point"
+                },
+                {
+                  "$ref": "#/components/schemas/Label"
+                }
+              ]
+            }
+          },
+          "shape": {
+            "$ref": "#/components/schemas/Shape"
+          },
+          "extra": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "codes": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer",
+                "format": "int64"
+              }
+            ]
+          },
+          "shapes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shape"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "markers"
+        ]
+      }
+    }
+  }
+}
