@@ -48,6 +48,36 @@ type OrderNotes =
     | String of value: string
     | OrderNotesCase2 of value: OrderNotesCase2
 
+type Warehouse =
+    { code: Option<string> }
+    ///Creates an instance of Warehouse with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): Warehouse = { code = None }
+
+[<RequireQualifiedAccess>]
+type OrderFulfilmentCase2Carrier =
+    | String of value: string
+    | Card of value: Card
+
+type Parcels =
+    { weight: Option<float> }
+    ///Creates an instance of Parcels with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): Parcels = { weight = None }
+
+type OrderFulfilmentCase2 =
+    { warehouse: Option<Warehouse>
+      carrier: Option<OrderFulfilmentCase2Carrier>
+      parcels: Option<list<Parcels>> }
+    ///Creates an instance of OrderFulfilmentCase2 with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): OrderFulfilmentCase2 =
+        { warehouse = None
+          carrier = None
+          parcels = None }
+
+[<RequireQualifiedAccess>]
+type OrderFulfilment =
+    | String of value: string
+    | OrderFulfilmentCase2 of value: OrderFulfilmentCase2
+
 type Order =
     { id: string
       ///A payment is a referenced card or one of two inline objects. Both inline objects become nested records PaymentCase2 and PaymentCase3.
@@ -64,7 +94,8 @@ type Order =
       attachment: Option<System.Text.Json.JsonElement>
       flagged: System.Text.Json.JsonElement
       described: Option<System.Text.Json.JsonElement>
-      emptyMarker: Option<System.Text.Json.JsonElement> }
+      emptyMarker: Option<System.Text.Json.JsonElement>
+      fulfilment: Option<OrderFulfilment> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string,
                           shipping: OrderShipping,
@@ -85,7 +116,8 @@ type Order =
           attachment = None
           flagged = flagged
           described = None
-          emptyMarker = None }
+          emptyMarker = None
+          fulfilment = None }
 
 [<RequireQualifiedAccess>]
 type GetOrder =
