@@ -194,6 +194,31 @@
               }
             ]
           },
+          "reference": {
+            "description": "Parent description wins",
+            "nullable": false,
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Inner description must be ignored"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer",
+                "format": "int32"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
           "attachment": {
             "oneOf": [
               {
@@ -217,6 +242,7 @@
           "id",
           "nickname",
           "priority",
+          "reference",
           "shipping"
         ]
       }

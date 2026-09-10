@@ -58,9 +58,16 @@ type Order =
       priority: Option<int64>
       coupon: Option<Card>
       weight: Option<System.Text.Json.JsonElement>
+      ///Parent description wins
+      reference: Option<string>
+      quantity: Option<int>
       attachment: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
-    static member Create (id: string, shipping: OrderShipping, nickname: Option<string>, priority: Option<int64>): Order =
+    static member Create (id: string,
+                          shipping: OrderShipping,
+                          nickname: Option<string>,
+                          priority: Option<int64>,
+                          reference: Option<string>): Order =
         { id = id
           payment = None
           shipping = shipping
@@ -69,6 +76,8 @@ type Order =
           priority = priority
           coupon = None
           weight = None
+          reference = reference
+          quantity = None
           attachment = None }
 
 [<RequireQualifiedAccess>]
