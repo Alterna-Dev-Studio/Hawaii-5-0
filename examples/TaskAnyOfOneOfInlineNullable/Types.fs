@@ -61,13 +61,17 @@ type Order =
       ///Parent description wins
       reference: Option<string>
       quantity: Option<int>
-      attachment: Option<System.Text.Json.JsonElement> }
+      attachment: Option<System.Text.Json.JsonElement>
+      flagged: System.Text.Json.JsonElement
+      described: Option<System.Text.Json.JsonElement>
+      emptyMarker: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string,
                           shipping: OrderShipping,
                           nickname: Option<string>,
                           priority: Option<int64>,
-                          reference: Option<string>): Order =
+                          reference: Option<string>,
+                          flagged: System.Text.Json.JsonElement): Order =
         { id = id
           payment = None
           shipping = shipping
@@ -78,7 +82,10 @@ type Order =
           weight = None
           reference = reference
           quantity = None
-          attachment = None }
+          attachment = None
+          flagged = flagged
+          described = None
+          emptyMarker = None }
 
 [<RequireQualifiedAccess>]
 type GetOrder =

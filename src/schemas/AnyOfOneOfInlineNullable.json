@@ -236,6 +236,35 @@
                 }
               }
             ]
+          },
+          "flagged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "nullable": "true"
+              }
+            ]
+          },
+          "described": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "nullable": true,
+                "description": "extra key"
+              }
+            ]
+          },
+          "emptyMarker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {}
+            ]
           }
         },
         "required": [
@@ -243,7 +272,8 @@
           "nickname",
           "priority",
           "reference",
-          "shipping"
+          "shipping",
+          "flagged"
         ]
       }
     }
