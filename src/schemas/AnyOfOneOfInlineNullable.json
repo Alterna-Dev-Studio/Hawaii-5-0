@@ -82,6 +82,25 @@
           }
         ]
       },
+      "LooseAttachment": {
+        "description": "One variant is an inline object and the other is an array (unsupported), so the whole type falls back to a free-form JSON value and no LooseAttachmentCase1 record is generated.",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
       "Order": {
         "type": "object",
         "properties": {
@@ -172,6 +191,24 @@
               },
               {
                 "nullable": false
+              }
+            ]
+          },
+          "attachment": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             ]
           }

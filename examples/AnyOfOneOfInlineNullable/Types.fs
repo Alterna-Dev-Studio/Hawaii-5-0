@@ -23,6 +23,9 @@ type Payment =
     | PaymentCase2 of value: PaymentCase2
     | PaymentCase3 of value: PaymentCase3
 
+///One variant is an inline object and the other is an array (unsupported), so the whole type falls back to a free-form JSON value and no LooseAttachmentCase1 record is generated.
+type LooseAttachment = System.Text.Json.JsonElement
+
 type OrderShippingCase2 =
     { street: string
       city: string }
@@ -54,7 +57,8 @@ type Order =
       nickname: Option<string>
       priority: Option<int64>
       coupon: Option<Card>
-      weight: Option<System.Text.Json.JsonElement> }
+      weight: Option<System.Text.Json.JsonElement>
+      attachment: Option<System.Text.Json.JsonElement> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string, shipping: OrderShipping, nickname: Option<string>, priority: Option<int64>): Order =
         { id = id
@@ -64,7 +68,8 @@ type Order =
           nickname = nickname
           priority = priority
           coupon = None
-          weight = None }
+          weight = None
+          attachment = None }
 
 [<RequireQualifiedAccess>]
 type GetOrder =
