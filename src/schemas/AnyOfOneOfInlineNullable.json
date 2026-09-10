@@ -1,0 +1,188 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AnyOfOneOfInlineNullable",
+    "version": "1.0",
+    "description": "Regression fixture for PR 14: inline object variants inside oneOf/anyOf are resolved into nested records and referenced from a discriminated union (at property level, array-item level and top level), while the OpenAPI 3.1 nullable pattern `anyOf: [T, {nullable: true}]` is simplified to `T` with nullable: true instead of generating a union. `{nullable: false}` is NOT the nullable pattern and must be left intact (falling back because the marker object is unsupported)."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/orders/{id}": {
+      "get": {
+        "summary": "Get an order",
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Card": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "Payment": {
+        "description": "A payment is a referenced card or one of two inline objects. Both inline objects become nested records PaymentCase2 and PaymentCase3.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Card"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "iban": {
+                "type": "string"
+              },
+              "bic": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "iban"
+            ]
+          },
+          {
+            "properties": {
+              "voucherCode": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Payment"
+          },
+          "shipping": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "street": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "street",
+                  "city"
+                ]
+              }
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "properties": {
+                    "author": {
+                      "type": "string"
+                    },
+                    "body": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "nullable": true
+              },
+              {
+                "type": "integer",
+                "format": "int64",
+                "nullable": false
+              }
+            ]
+          },
+          "coupon": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Card"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "nullable": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nickname",
+          "priority",
+          "shipping"
+        ]
+      }
+    }
+  }
+}

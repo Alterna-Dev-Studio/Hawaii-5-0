@@ -3,7 +3,7 @@
   "info": {
     "title": "AnyOfOneOfCollections",
     "version": "1.0",
-    "description": "Regression fixture for PR 13: array `items` and `additionalProperties` schemas that are themselves multi-element oneOf/anyOf must generate (or safely fall back from) a discriminated union, not a reference to an undeclared type. Also covers the fallback path when a variant is an inline object or an unsupported schema, top-level oneOf schemas that become module-level DUs or type abbreviations, required collections of unions, and union case-name deduplication/merging."
+    "description": "Regression fixture for PR 13: array `items` and `additionalProperties` schemas that are themselves multi-element oneOf/anyOf must generate (or safely fall back from) a discriminated union, not a reference to an undeclared type. Also covers inline-object variants (resolved into nested records) and the fallback path when a variant is an unsupported schema, top-level oneOf schemas that become module-level DUs or type abbreviations, required collections of unions, and union case-name deduplication/merging."
   },
   "servers": [
     {
@@ -80,7 +80,7 @@
         ]
       },
       "LooseShape": {
-        "description": "A shape whose second variant is an inline object, so the whole type falls back to a free-form JSON value.",
+        "description": "A shape whose second variant is an inline object. The inline object becomes a nested record (LooseShapeCase2) and the type is still a real discriminated union.",
         "oneOf": [
           {
             "$ref": "#/components/schemas/Point"

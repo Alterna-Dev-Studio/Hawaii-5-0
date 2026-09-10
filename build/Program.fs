@@ -679,6 +679,33 @@ let integrationKnownSchemas() =
         emptyDefinitions = "ignore"
     }
 
+    let defaultAnyOfOneOfInlineNullable = {
+        schemaUrl = "./schemas/AnyOfOneOfInlineNullable.json"
+        title = "AnyOfOneOfInlineNullable"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let taskAnyOfOneOfInlineNullable = {
+        schemaUrl = "./schemas/AnyOfOneOfInlineNullable.json"
+        title = "TaskAnyOfOneOfInlineNullable"
+        synchronous = false
+        asyncReturnType = "task"
+        target = "fsharp"
+        emptyDefinitions = "ignore"
+    }
+
+    let fableAnyOfOneOfInlineNullable = {
+        schemaUrl = "./schemas/AnyOfOneOfInlineNullable.json"
+        title = "FableAnyOfOneOfInlineNullable"
+        synchronous = false
+        asyncReturnType = "async"
+        target = "fable"
+        emptyDefinitions = "ignore"
+    }
+
     let schemas = [
         defaultPetStore
         synchronousPetStore
@@ -736,6 +763,9 @@ let integrationKnownSchemas() =
         defaultAnyOfOneOfCollections
         taskAnyOfOneOfCollections
         fableAnyOfOneOfCollections
+        defaultAnyOfOneOfInlineNullable
+        taskAnyOfOneOfInlineNullable
+        fableAnyOfOneOfInlineNullable
     ]
 
     for (index, schema) in List.indexed schemas do 
