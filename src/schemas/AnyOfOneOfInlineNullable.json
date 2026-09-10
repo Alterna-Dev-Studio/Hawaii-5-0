@@ -326,6 +326,20 @@
                 }
               ]
             }
+          },
+          "delivery": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "properties": {
+                  "eta": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
           }
         },
         "required": [
@@ -336,6 +350,15 @@
           "shipping",
           "flagged"
         ]
+      },
+      "OrderDeliveryCase2": {
+        "type": "object",
+        "description": "Global schema whose name collides with the inline record name the delivery union would otherwise pick.",
+        "properties": {
+          "note": {
+            "type": "string"
+          }
+        }
       }
     }
   }

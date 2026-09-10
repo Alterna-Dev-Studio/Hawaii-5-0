@@ -89,6 +89,16 @@ type OrderMetadata =
     | String of value: string
     | OrderMetadataCase2 of value: OrderMetadataCase2
 
+type OrderDeliveryCase22 =
+    { eta: Option<string> }
+    ///Creates an instance of OrderDeliveryCase22 with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): OrderDeliveryCase22 = { eta = None }
+
+[<RequireQualifiedAccess>]
+type OrderDelivery =
+    | String of value: string
+    | OrderDeliveryCase22 of value: OrderDeliveryCase22
+
 type Order =
     { id: string
       ///A payment is a referenced card or one of two inline objects. Both inline objects become nested records PaymentCase2 and PaymentCase3.
@@ -107,7 +117,8 @@ type Order =
       described: Option<System.Text.Json.JsonElement>
       emptyMarker: Option<System.Text.Json.JsonElement>
       fulfilment: Option<OrderFulfilment>
-      metadata: Option<Map<string, OrderMetadata>> }
+      metadata: Option<Map<string, OrderMetadata>>
+      delivery: Option<OrderDelivery> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string,
                           shipping: OrderShipping,
@@ -130,7 +141,14 @@ type Order =
           described = None
           emptyMarker = None
           fulfilment = None
-          metadata = None }
+          metadata = None
+          delivery = None }
+
+///Global schema whose name collides with the inline record name the delivery union would otherwise pick.
+type OrderDeliveryCase2 =
+    { note: Option<string> }
+    ///Creates an instance of OrderDeliveryCase2 with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): OrderDeliveryCase2 = { note = None }
 
 [<RequireQualifiedAccess>]
 type GetOrder =

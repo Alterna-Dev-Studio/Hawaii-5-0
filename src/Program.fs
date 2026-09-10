@@ -697,15 +697,27 @@ let unionVariantsResolvable (variants: UnionVariant list) =
 /// Converts every InlineObject variant into a Ref variant by naming a nested record
 /// `{unionName}Case{n}` (n = 1-based position in the anyOf/oneOf array) and invoking `emitRecord`
 /// to declare it. Callers must only invoke this when unionVariantsResolvable returned true.
-let resolveInlineObjectVariants (unionName: string) (variants: UnionVariant list) (emitRecord: string -> OpenApiSchema -> unit) (visitedTypes: ResizeArray<string>) =
+///
+/// The preferred name may collide with a type that already exists or will exist -- typically a
+/// component schema that happens to be called `{unionName}Case{n}`. Silently reusing such a name
+/// would either skip the nested record (pointing the DU at the wrong, global type) or emit a
+/// duplicate declaration when the global schema is declared later. `isTaken` must therefore
+/// answer for both already-visited types AND global component schema names; while it reports
+/// the candidate as taken, a numeric suffix (`2`, `3`, ...) is appended until a free name is
+/// found. The chosen name is registered in `visitedTypes` before the record is emitted.
+let resolveInlineObjectVariants (unionName: string) (variants: UnionVariant list) (emitRecord: string -> OpenApiSchema -> unit) (visitedTypes: ResizeArray<string>) (isTaken: string -> bool) =
     variants
     |> List.mapi (fun i variant ->
         match variant with
         | UnionVariant.InlineObject inlineSchema ->
-            let inlineTypeName = sanitizeTypeName (unionName + "Case" + string (i + 1))
-            if not (visitedTypes.Contains inlineTypeName) then
-                visitedTypes.Add inlineTypeName
-                emitRecord inlineTypeName inlineSchema
+            let preferredName = sanitizeTypeName (unionName + "Case" + string (i + 1))
+            let rec freeName (candidate: string) (suffix: int) =
+                if isTaken candidate
+                then freeName (preferredName + string suffix) (suffix + 1)
+                else candidate
+            let inlineTypeName = freeName preferredName 2
+            visitedTypes.Add inlineTypeName
+            emitRecord inlineTypeName inlineSchema
             UnionVariant.Ref inlineTypeName
         | other -> other)
 
@@ -1050,6 +1062,19 @@ let isGlobalRef (name: string) (openApiDocument: OpenApiDocument) =
 
     isGlobal
 
+/// Whether `typeName` (already sanitized) is the name createGlobalTypesModule will use for one of
+/// the component schemas -- either the sanitized schema key or its sanitized title, mirroring how
+/// that function computes `typeName`. Used to keep synthesized nested-record names from colliding
+/// with global types regardless of the order the components are declared in.
+let isGlobalSchemaName (typeName: string) (openApiDocument: OpenApiDocument) =
+    if isNull openApiDocument.Components || isNull openApiDocument.Components.Schemas then
+        false
+    else
+        openApiDocument.Components.Schemas
+        |> Seq.exists (fun pair ->
+            typeName = sanitizeTypeName pair.Key
+            || (not (invalidTitle pair.Value.Title) && typeName = sanitizeTypeName pair.Value.Title))
+
 let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (visitedTypes: ResizeArray<string>) (config: CodegenConfig) (openApiDocument: OpenApiDocument) (factory: FactoryFunction) : SynModuleDecl list =
     let info : SynComponentInfoRcd = {
         Access = None
@@ -1114,6 +1139,7 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
                             let nestedRecord = createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory
                             nestedObjects.AddRange nestedRecord)
                             visitedTypes
+                            (fun name -> visitedTypes.Contains name || isGlobalSchemaName name openApiDocument)
                     visitedTypes.Add unionName
                     nestedObjects.Add (createUnionType unionName resolvedVariants None)
                 SynType.Create unionName
@@ -2149,6 +2175,7 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                                 for decl in createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory do
                                     moduleTypes.Add decl)
                                 visitedTypes
+                                (fun name -> visitedTypes.Contains name || isGlobalSchemaName name openApiDocument)
                         moduleTypes.Add (createUnionType typeName resolvedVariants (Some topLevelObject.Value.Description))
                     else
                         // one or more variants are Unsupported -- full fallback for
