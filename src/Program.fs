@@ -236,6 +236,41 @@ let simplifyRedundantSchemaParts (schema: Nodes.JsonObject) =
                     for innerProp in innerObject do
                         part.Add(innerProp.Key, innerProp.Value.DeepClone())
                     part.Remove("anyOf") |> ignore
+                elif anyOfArray.Count = 2 then
+                    // simplify the OpenAPI 3.1 nullable pattern
+                    // { anyOf: [ { ...T }, { nullable: true } ] }
+                    // into
+                    // { ...T, nullable: true }
+                    // The marker entry must be exactly { nullable: true } (a JSON boolean true) --
+                    // { nullable: false } or a non-boolean value is not the pattern and is left intact.
+                    let isNullableMarker (node: Nodes.JsonNode) =
+                        node <> null
+                        && node.GetValueKind() = JsonValueKind.Object
+                        && (let obj = node.AsObject()
+                            let mutable nullableValue = Unchecked.defaultof<Nodes.JsonNode>
+                            obj.Count = 1
+                            && obj.TryGetPropertyValue("nullable", &nullableValue)
+                            && nullableValue <> null
+                            && nullableValue.GetValueKind() = JsonValueKind.True)
+                    let isTypedEntry (node: Nodes.JsonNode) =
+                        node <> null
+                        && node.GetValueKind() = JsonValueKind.Object
+                        && not (isNullableMarker node)
+                    let typedEntry =
+                        if isTypedEntry anyOfArray.[0] && isNullableMarker anyOfArray.[1] then Some (anyOfArray.[0].AsObject())
+                        elif isNullableMarker anyOfArray.[0] && isTypedEntry anyOfArray.[1] then Some (anyOfArray.[1].AsObject())
+                        else None
+                    match typedEntry with
+                    | Some innerObject ->
+                        for innerProp in innerObject do
+                            if not (part.ContainsKey innerProp.Key) then
+                                part.Add(innerProp.Key, innerProp.Value.DeepClone())
+                        // the union explicitly admits null, so nullable must be true regardless of
+                        // any nullable: false carried by the parent or the typed entry
+                        part.["nullable"] <- Nodes.JsonValue.Create(true)
+                        part.Remove("anyOf") |> ignore
+                    | None ->
+                        ()
             elif kvp.Key = "oneOf" && kvp.Value <> null && kvp.Value.GetValueKind() = JsonValueKind.Array then
                 // simplify this shape
                 // { oneOf: [ first ] }
@@ -649,19 +684,46 @@ let classifyAnyOfOneOf (schemas: IList<OpenApiSchema>) : UnionVariant list =
     )
     |> Seq.toList
 
-/// Per the PR 13 design decision: an anyOf/oneOf union can only be generated as a DU when
-/// every variant is a Ref or a Primitive. InlineObject variants get real nested-record support
-/// starting in PR 14; at this layer they are treated exactly like Unsupported -- a single
-/// unsupported/inline variant means full fallback for the WHOLE type, never a partial DU.
-let unionVariantsFullySupported (variants: UnionVariant list) =
+/// An anyOf/oneOf union can be generated as a DU once its InlineObject variants have been
+/// resolved into nested records, provided no variant is Unsupported. A single Unsupported
+/// variant means full fallback for the WHOLE type -- never a partial DU -- and in that case no
+/// nested records are emitted for the inline variants either.
+let unionVariantsResolvable (variants: UnionVariant list) =
     variants
     |> List.forall (function
-        | UnionVariant.Ref _ | UnionVariant.Primitive _ -> true
-        | UnionVariant.InlineObject _ | UnionVariant.Unsupported -> false)
+        | UnionVariant.Ref _ | UnionVariant.Primitive _ | UnionVariant.InlineObject _ -> true
+        | UnionVariant.Unsupported -> false)
+
+/// Converts every InlineObject variant into a Ref variant by naming a nested record
+/// `{unionName}Case{n}` (n = 1-based position in the anyOf/oneOf array) and invoking `emitRecord`
+/// to declare it. Callers must only invoke this when unionVariantsResolvable returned true.
+///
+/// The preferred name may collide with a type that already exists or will exist -- typically a
+/// component schema that happens to be called `{unionName}Case{n}`. Silently reusing such a name
+/// would either skip the nested record (pointing the DU at the wrong, global type) or emit a
+/// duplicate declaration when the global schema is declared later. `isTaken` must therefore
+/// answer for both already-visited types AND global component schema names; while it reports
+/// the candidate as taken, a numeric suffix (`2`, `3`, ...) is appended until a free name is
+/// found. The chosen name is registered in `visitedTypes` before the record is emitted.
+let resolveInlineObjectVariants (unionName: string) (variants: UnionVariant list) (emitRecord: string -> OpenApiSchema -> unit) (visitedTypes: ResizeArray<string>) (isTaken: string -> bool) =
+    variants
+    |> List.mapi (fun i variant ->
+        match variant with
+        | UnionVariant.InlineObject inlineSchema ->
+            let preferredName = sanitizeTypeName (unionName + "Case" + string (i + 1))
+            let rec freeName (candidate: string) (suffix: int) =
+                if isTaken candidate
+                then freeName (preferredName + string suffix) (suffix + 1)
+                else candidate
+            let inlineTypeName = freeName preferredName 2
+            visitedTypes.Add inlineTypeName
+            emitRecord inlineTypeName inlineSchema
+            UnionVariant.Ref inlineTypeName
+        | other -> other)
 
 /// NOTE: this function intentionally does NOT synthesize anyOf/oneOf union type names.
 /// Callers that need a union type for a multi-element oneOf/anyOf schema must classify the
-/// variants themselves (via classifyAnyOfOneOf/unionVariantsFullySupported) and emit the DU
+/// variants themselves (via classifyAnyOfOneOf/unionVariantsResolvable/resolveInlineObjectVariants) and emit the DU
 /// declaration into their own nestedObjects/moduleTypes accumulator -- this function has no
 /// access to those accumulators, so returning a synthesized name here would produce a
 /// reference to a type that never gets declared.
@@ -879,9 +941,10 @@ let createUnionType (unionName: string) (variants: UnionVariant list) (docs: str
                         SynUnionCaseType.UnionCaseFields [field.FromRcd], PreXmlDoc.Empty, None, range0))
             | UnionVariant.InlineObject _
             | UnionVariant.Unsupported ->
-                // Callers must only invoke createUnionType when unionVariantsFullySupported
-                // returned true, so these should never appear here. Defensive no-op rather than
-                // emitting a synthetic catch-all case mixed with real ones.
+                // Callers must only invoke createUnionType with variants that passed
+                // unionVariantsResolvable and went through resolveInlineObjectVariants, so these
+                // should never appear here. Defensive no-op rather than emitting a synthetic
+                // catch-all case mixed with real ones.
                 None)
 
     let enumRepresentation = SynTypeDefnSimpleReprUnionRcd.Create(cases)
@@ -999,6 +1062,19 @@ let isGlobalRef (name: string) (openApiDocument: OpenApiDocument) =
 
     isGlobal
 
+/// Whether `typeName` (already sanitized) is the name createGlobalTypesModule will use for one of
+/// the component schemas -- either the sanitized schema key or its sanitized title, mirroring how
+/// that function computes `typeName`. Used to keep synthesized nested-record names from colliding
+/// with global types regardless of the order the components are declared in.
+let isGlobalSchemaName (typeName: string) (openApiDocument: OpenApiDocument) =
+    if isNull openApiDocument.Components || isNull openApiDocument.Components.Schemas then
+        false
+    else
+        openApiDocument.Components.Schemas
+        |> Seq.exists (fun pair ->
+            typeName = sanitizeTypeName pair.Key
+            || (not (invalidTitle pair.Value.Title) && typeName = sanitizeTypeName pair.Value.Title))
+
 let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (visitedTypes: ResizeArray<string>) (config: CodegenConfig) (openApiDocument: OpenApiDocument) (factory: FactoryFunction) : SynModuleDecl list =
     let info : SynComponentInfoRcd = {
         Access = None
@@ -1051,14 +1127,21 @@ let rec createRecordFromSchema (recordName: string) (schema: OpenApiSchema) (vis
 
         // Classifies a multi-element oneOf/anyOf schema and either emits a DU (registering it
         // with nestedObjects/visitedTypes so the declaration is guaranteed to exist) or falls
-        // back to JsonElement/obj when any variant is InlineObject/Unsupported.
+        // back to JsonElement/obj when any variant is Unsupported. InlineObject variants are
+        // resolved into nested records (emitted into nestedObjects) and become Ref variants.
         let unionOrFallbackFieldType (unionBaseName: string) (schemas: IList<OpenApiSchema>) : SynType =
+            let unionName = sanitizeTypeName unionBaseName
             let variants = classifyAnyOfOneOf schemas
-            if unionVariantsFullySupported variants then
-                let unionName = sanitizeTypeName unionBaseName
+            if unionVariantsResolvable variants then
                 if not (visitedTypes.Contains unionName) then
+                    let resolvedVariants =
+                        resolveInlineObjectVariants unionName variants (fun inlineTypeName inlineSchema ->
+                            let nestedRecord = createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory
+                            nestedObjects.AddRange nestedRecord)
+                            visitedTypes
+                            (fun name -> visitedTypes.Contains name || isGlobalSchemaName name openApiDocument)
                     visitedTypes.Add unionName
-                    nestedObjects.Add (createUnionType unionName variants None)
+                    nestedObjects.Add (createUnionType unionName resolvedVariants None)
                 SynType.Create unionName
             else
                 if isFSharpTarget config.target then SynType.JToken() else SynType.Object()
@@ -2085,10 +2168,17 @@ let createGlobalTypesModule (openApiDocument: OpenApiDocument) (config: CodegenC
                 | Some schemas ->
                     let variants = classifyAnyOfOneOf schemas
                     visitedTypes.Add typeName
-                    if unionVariantsFullySupported variants then
-                        moduleTypes.Add (createUnionType typeName variants (Some topLevelObject.Value.Description))
+                    if unionVariantsResolvable variants then
+                        let resolvedVariants =
+                            resolveInlineObjectVariants typeName variants (fun inlineTypeName inlineSchema ->
+                                let factory = FactoryFunction.Create
+                                for decl in createRecordFromSchema inlineTypeName inlineSchema visitedTypes config openApiDocument factory do
+                                    moduleTypes.Add decl)
+                                visitedTypes
+                                (fun name -> visitedTypes.Contains name || isGlobalSchemaName name openApiDocument)
+                        moduleTypes.Add (createUnionType typeName resolvedVariants (Some topLevelObject.Value.Description))
                     else
-                        // one or more variants are InlineObject/Unsupported -- full fallback for
+                        // one or more variants are Unsupported -- full fallback for
                         // the whole type rather than a partial DU
                         let freeFormType =
                             if isFSharpTarget config.target
