@@ -78,6 +78,17 @@ type OrderFulfilment =
     | String of value: string
     | OrderFulfilmentCase2 of value: OrderFulfilmentCase2
 
+type OrderMetadataCase2 =
+    { key: Option<string>
+      value: Option<string> }
+    ///Creates an instance of OrderMetadataCase2 with all optional fields initialized to None. The required fields are parameters of this function
+    static member Create (): OrderMetadataCase2 = { key = None; value = None }
+
+[<RequireQualifiedAccess>]
+type OrderMetadata =
+    | String of value: string
+    | OrderMetadataCase2 of value: OrderMetadataCase2
+
 type Order =
     { id: string
       ///A payment is a referenced card or one of two inline objects. Both inline objects become nested records PaymentCase2 and PaymentCase3.
@@ -95,7 +106,8 @@ type Order =
       flagged: System.Text.Json.JsonElement
       described: Option<System.Text.Json.JsonElement>
       emptyMarker: Option<System.Text.Json.JsonElement>
-      fulfilment: Option<OrderFulfilment> }
+      fulfilment: Option<OrderFulfilment>
+      metadata: Option<Map<string, OrderMetadata>> }
     ///Creates an instance of Order with all optional fields initialized to None. The required fields are parameters of this function
     static member Create (id: string,
                           shipping: OrderShipping,
@@ -117,7 +129,8 @@ type Order =
           flagged = flagged
           described = None
           emptyMarker = None
-          fulfilment = None }
+          fulfilment = None
+          metadata = None }
 
 [<RequireQualifiedAccess>]
 type GetOrder =
